@@ -10,7 +10,7 @@ import java.lang.annotation.*;
 @Documented
 public @interface Excel {
 
-	String name();
+	String name() default ""; // 标题
 
-	int order();
+	int order() default Integer.MIN_VALUE; // 排序
 }

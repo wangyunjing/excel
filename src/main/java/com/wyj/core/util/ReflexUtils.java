@@ -22,11 +22,11 @@ public class ReflexUtils {
 	private static final int DEFAULT_INITIAL_CAPACITY = 256;
 
 	private static final Map<Class<?>, Field[]> declaredFieldsCache =
-			new ConcurrentHashMap<>(DEFAULT_INITIAL_CAPACITY,DEFAULT_LOAD_FACTOR,
+			new ConcurrentHashMap<>(DEFAULT_INITIAL_CAPACITY, DEFAULT_LOAD_FACTOR,
 					DEFAULT_CONCURRENCY_LEVEL);
 
 	private static final Map<Class<?>, Method[]> declaredMethodsCache =
-			new ConcurrentHashMap<>(DEFAULT_INITIAL_CAPACITY,DEFAULT_LOAD_FACTOR,
+			new ConcurrentHashMap<>(DEFAULT_INITIAL_CAPACITY, DEFAULT_LOAD_FACTOR,
 					DEFAULT_CONCURRENCY_LEVEL);
 
 	public static Field[] getAllField(Class<?> clazz) {
@@ -48,9 +48,10 @@ public class ReflexUtils {
 	/**
 	 * 查询范围:当前类以及父类
 	 * 字段的访问类型: private, protected, public, default access
+	 *
 	 * @param clazz 类
-	 * @param name 字段名称
-	 * @param type 字段类型
+	 * @param name  字段名称
+	 * @param type  字段类型
 	 * @return 根据字段名称以及字段类型从类中查询匹配的字段,
 	 * 假设字段名称和字段类型有一个为空,那么可能会匹配多个字段, 只会返回第一个匹配的字段
 	 */
@@ -110,8 +111,7 @@ public class ReflexUtils {
 		}
 		try {
 			return method.invoke(target, args);
-		}
-		catch (Exception ex) {
+		} catch (Exception ex) {
 			handleReflectionException(ex);
 		}
 		throw new IllegalStateException("Should never get here");
@@ -212,8 +212,7 @@ public class ReflexUtils {
 					if (existingMethod.getReturnType() != method.getReturnType() &&
 							existingMethod.getReturnType().equals(method.getReturnType())) {
 						methodBeingOverriddenWithCovariantReturnType = existingMethod;
-					}
-					else {
+					} else {
 						knownSignature = true;
 					}
 					break;
@@ -242,15 +241,13 @@ public class ReflexUtils {
 			}
 			try {
 				mc.doWith(method);
-			}
-			catch (IllegalAccessException ex) {
+			} catch (IllegalAccessException ex) {
 				throw new IllegalStateException("Not allowed to access method '" + method.getName() + "': " + ex);
 			}
 		}
 		if (clazz.getSuperclass() != null) {
 			doWithMethods(clazz.getSuperclass(), mc, mf);
-		}
-		else if (clazz.isInterface()) {
+		} else if (clazz.isInterface()) {
 			for (Class<?> superIfc : clazz.getInterfaces()) {
 				doWithMethods(superIfc, mc, mf);
 			}
@@ -287,8 +284,7 @@ public class ReflexUtils {
 				for (Method defaultMethod : defaultMethods) {
 					result[index++] = defaultMethod;
 				}
-			}
-			else {
+			} else {
 				result = declaredMethods;
 			}
 			declaredMethodsCache.put(clazz, (result.length == 0 ? NO_METHODS : result));

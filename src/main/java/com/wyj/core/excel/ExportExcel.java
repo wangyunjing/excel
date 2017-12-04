@@ -1,10 +1,11 @@
 package com.wyj.core.excel;
 
-import com.wyj.core.convert.Converter;
 import com.wyj.core.convert.ConverterSupport;
 import com.wyj.core.excel.annotation.Excel;
 import com.wyj.core.excel.exception.ExcelExportException;
 import com.wyj.core.util.Assert;
+import com.wyj.core.util.ClassUtils;
+import com.wyj.core.util.ReflexUtils;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
@@ -18,10 +19,11 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.*;
+import java.util.concurrent.*;
 
 /**
  * 导出Excel
- * T这个类中必须提供get方法
+ * 导出的数据类必须有get方法
  */
 public class ExportExcel {
 
@@ -40,9 +42,6 @@ public class ExportExcel {
 
 	// 插入顺序
 	private Map<Field, Excel> map = new LinkedHashMap<>();
-
-	// 转换器
-	private ConverterSupport converterSupport = ConverterSupport.getInstance();
 
 	private ExportExcel(File file, Class clazz, List dataList) {
 		Assert.notNull(clazz, "file must not be null");
@@ -67,20 +66,19 @@ public class ExportExcel {
 		this.sheet = workbook.createSheet();
 	}
 
-	public void addConvert(Class sourceClass, Class targetClass, Class<? extends Converter> converter) {
-		converterSupport.addConvert(sourceClass, targetClass, converter);
-	}
-
 	public static void syncExport(File file, Class clazz, List dataList) {
-		syncExport(file, clazz, dataList, null);
+		ExportExcel exportExcel = new ExportExcel(file, clazz, dataList);
+		exportExcel.export();
 	}
 
-	public static void syncExport(File file, Class clazz, List dataList, ConverterSupport converterSupport) {
-		ExportExcel exportExcel = new ExportExcel(file, clazz, dataList);
-		if (converterSupport != null) {
-			exportExcel.converterSupport.map.putAll(converterSupport.map);
-		}
-		exportExcel.export();
+	public static Future<Void> asyncExport(ExecutorService executorService, File file, Class clazz, List dataList) {
+		FutureTask<Void> futureTask = new FutureTask<>(() -> {
+			ExportExcel exportExcel = new ExportExcel(file, clazz, dataList);
+			exportExcel.export();
+			return null;
+		});
+		executorService.submit(futureTask);
+		return futureTask;
 	}
 
 	private void export() {
@@ -126,7 +124,6 @@ public class ExportExcel {
 		}
 	}
 
-
 	private void createRow(int rowNum, IteratorMap<Field, Excel> iteratorMap) {
 		Row row = sheet.createRow(rowNum);
 		int colNum = 0;
@@ -145,24 +142,22 @@ public class ExportExcel {
 		try {
 			String fieldName = field.getName();
 			String methodName = "get" + fieldName.substring(0, 1).toUpperCase() + fieldName.substring(1);
-			Method method = clazz.getMethod(methodName);
-			Object obj = method.invoke(t);
+
+			// 获取没有参数的方法
+			Method method = ClassUtils.getMethodByName(clazz, methodName);
+
+			Object obj = ReflexUtils.invokeMethod(method, t);
 			if (obj == null) {
 				return "";
 			}
-			if (obj.getClass() == String.class) {
-				return String.class.cast(obj);
-			}
-			if (converterSupport.isSupport(obj.getClass(), String.class)) {
-				Optional<String> optional = converterSupport.convert(obj.getClass(), String.class, obj);
-				if (optional.isPresent()) {
-					return optional.get();
-				}
-				return "";
+			// 使用obj.getClass(), 而不使用field.getType(), 是因为有可能get方法返回的不是原类型
+			if (ConverterSupport.isSupport(obj.getClass(), String.class)) {
+				Optional<String> optional = ConverterSupport.convert(obj.getClass(), String.class, obj);
+				optional.orElse("");
 			}
 			return obj.toString();
 		} catch (Exception e) {
-			throw new RuntimeException(e);
+			throw new ExcelExportException("获取字段值出错!", e);
 		}
 	}
 
@@ -170,7 +165,8 @@ public class ExportExcel {
 		void iterator(Map.Entry<K, V> entry, Row row, int colNum);
 	}
 
-	public static void main(String[] args) {
+	public static void main(String[] args) throws ExecutionException, InterruptedException {
+		ExecutorService executorService = Executors.newSingleThreadExecutor();
 		List<Name> list = new ArrayList<>();
 		list.add(new Name("w1", 1));
 		list.add(new Name("w2", 2));
@@ -178,13 +174,17 @@ public class ExportExcel {
 		list.add(new Name("w4", 4));
 		list.add(new Name("w5", 5));
 		list.add(new Name("w6", 6));
-		ExportExcel.syncExport(new File("/tmp/export/myname.xls"), Name.class, list);
+		Future<Void> future = ExportExcel.asyncExport(executorService, new File("/tmp/export/myname.xls"), Name.class, list);
+		future.get();
+		System.out.println("Main end!");
+		executorService.shutdown();
+		System.out.println("end!");
 	}
 
-	static class Name {
+	public static class Name {
 		@Excel(name = "姓名", order = 1)
 		private String name;
-		@Excel(name = "年龄", order = 2)
+		@Excel(name = "姓名", order = 2)
 		private Integer age;
 
 		public Name() {

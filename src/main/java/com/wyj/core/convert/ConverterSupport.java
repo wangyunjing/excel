@@ -4,34 +4,41 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Created by wyj on 17-9-19.
  */
 public class ConverterSupport {
 
-	public Map<ConverterMapKey, Class<? extends Converter>> map;
-
 	public static ConverterSupport getInstance() {
-		return new ConverterSupport();
+		return ConverterSupportHolder.converterSupport;
 	}
+
+	public static class ConverterSupportHolder {
+		public static ConverterSupport converterSupport = new ConverterSupport();
+	}
+
+	private Map<ConverterMapKey, Class<? extends Converter>> map = new ConcurrentHashMap<>();
+
 
 	private ConverterSupport() {
-		map = new HashMap<>();
-		this.addConvert(String.class, Date.class, StringToDateConverter.class);
-		this.addConvert(Date.class, String.class, DateToStringConverter.class);
+		this.doAddConvert(String.class, Date.class, StringToDateConverter.class);
+		this.doAddConvert(String.class, Integer.class, StringToIntegerConverter.class);
+		this.doAddConvert(String.class, Double.class, StringToDoubleConverter.class);
+		this.doAddConvert(Date.class, String.class, DateToStringConverter.class);
 	}
 
-	public boolean isSupport(Class sourceClass, Class targetClass) {
+	public static boolean isSupport(Class sourceClass, Class targetClass) {
 		if (sourceClass == null || targetClass == null) {
-			throw new RuntimeException("不能为空");
+			return false;
 		}
 		ConverterMapKey converterMapKey = new ConverterMapKey(sourceClass, targetClass);
-		Class<? extends Converter> converterClass = map.get(converterMapKey);
+		Class<? extends Converter> converterClass = getInstance().map.get(converterMapKey);
 		return converterClass == null ? false : true;
 	}
 
-	public <T> Optional<T> convert(Class sourceClass, Class<T> targetClass, Object source) throws
+	public static  <T> Optional<T> convert(Class sourceClass, Class<T> targetClass, Object source) throws
 			IllegalAccessException, InstantiationException {
 		if (sourceClass == null || targetClass == null || source == null) {
 			throw new RuntimeException("不能为空");
@@ -40,7 +47,7 @@ public class ConverterSupport {
 			throw new RuntimeException("sourceClass and source 类型不一致!");
 		}
 		ConverterMapKey converterMapKey = new ConverterMapKey(sourceClass, targetClass);
-		Class<? extends Converter> converterClass = map.get(converterMapKey);
+		Class<? extends Converter> converterClass = getInstance().map.get(converterMapKey);
 		if (converterClass == null) {
 			throw new RuntimeException("not support " + sourceClass.getName() + " convert to " + targetClass);
 		}
@@ -48,14 +55,17 @@ public class ConverterSupport {
 		return Optional.ofNullable((T) converter.convert(source));
 	}
 
-	public void addConvert(Class sourceClass, Class targetClass, Class<? extends Converter> converter) {
+	public static void addConvert(Class sourceClass, Class targetClass, Class<? extends Converter> converter) {
+		getInstance().doAddConvert(sourceClass, targetClass, converter);
+	}
+
+	public void doAddConvert(Class sourceClass, Class targetClass, Class<? extends Converter> converter) {
 		if (sourceClass == null || targetClass == null || converter == null) {
 			throw new RuntimeException("不能为空");
 		}
 		ConverterMapKey converterMapKey = new ConverterMapKey(sourceClass, targetClass);
 		map.put(converterMapKey, converter);
 	}
-
 
 	private static class ConverterMapKey {
 		private Class sourceClass;
