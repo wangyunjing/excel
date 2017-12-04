@@ -1,7 +1,7 @@
 package com.wyj.core.convert;
 
+import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -19,7 +19,8 @@ public class ConverterSupport {
 		public static ConverterSupport converterSupport = new ConverterSupport();
 	}
 
-	private Map<ConverterMapKey, Class<? extends Converter>> map = new ConcurrentHashMap<>();
+	//	private Map<ConverterMapKey, Class<? extends Converter>> map = new ConcurrentHashMap<>();
+	private Map<ConverterMapKey, ArrayList<Class<? extends Converter>>> map = new ConcurrentHashMap<>();
 
 
 	private ConverterSupport() {
@@ -34,37 +35,53 @@ public class ConverterSupport {
 			return false;
 		}
 		ConverterMapKey converterMapKey = new ConverterMapKey(sourceClass, targetClass);
-		Class<? extends Converter> converterClass = getInstance().map.get(converterMapKey);
-		return converterClass == null ? false : true;
+		ArrayList<Class<? extends Converter>> classes = getInstance().map.get(converterMapKey);
+		return classes == null ? false : true;
 	}
 
-	public static  <T> Optional<T> convert(Class sourceClass, Class<T> targetClass, Object source) throws
-			IllegalAccessException, InstantiationException {
+	public static <T> Optional<T> convert(Class sourceClass, Class<T> targetClass, Object source) {
+		if (!isSupport(sourceClass, targetClass)) {
+			throw new RuntimeException("not support " + sourceClass.getName() + " convert to " + targetClass);
+		}
 		if (sourceClass == null || targetClass == null || source == null) {
 			throw new RuntimeException("不能为空");
 		}
 		if (!source.getClass().equals(sourceClass)) {
 			throw new RuntimeException("sourceClass and source 类型不一致!");
 		}
+
 		ConverterMapKey converterMapKey = new ConverterMapKey(sourceClass, targetClass);
-		Class<? extends Converter> converterClass = getInstance().map.get(converterMapKey);
-		if (converterClass == null) {
-			throw new RuntimeException("not support " + sourceClass.getName() + " convert to " + targetClass);
+
+		ArrayList<Class<? extends Converter>> classes = getInstance().map.get(converterMapKey);
+		Exception exception = null;
+		for (Class<? extends Converter> converterClass : classes) {
+			try {
+				Converter converter = converterClass.newInstance();
+				return Optional.ofNullable((T) converter.convert(source));
+			} catch (Exception e) {
+				exception = e;
+			}
 		}
-		Converter converter = converterClass.newInstance();
-		return Optional.ofNullable((T) converter.convert(source));
+		throw new RuntimeException("类型转换出错!", exception);
 	}
 
 	public static void addConvert(Class sourceClass, Class targetClass, Class<? extends Converter> converter) {
 		getInstance().doAddConvert(sourceClass, targetClass, converter);
 	}
 
-	public void doAddConvert(Class sourceClass, Class targetClass, Class<? extends Converter> converter) {
+	public synchronized void doAddConvert(Class sourceClass, Class targetClass, Class<? extends Converter> converter) {
 		if (sourceClass == null || targetClass == null || converter == null) {
 			throw new RuntimeException("不能为空");
 		}
 		ConverterMapKey converterMapKey = new ConverterMapKey(sourceClass, targetClass);
-		map.put(converterMapKey, converter);
+		ArrayList<Class<? extends Converter>> classes = map.get(converterMapKey);
+		if (classes == null) {
+			classes = new ArrayList<>();
+		}
+		if (!classes.contains(converter)) {
+			classes.add(0, converter);
+		}
+		map.put(converterMapKey, classes);
 	}
 
 	private static class ConverterMapKey {
