@@ -153,7 +153,7 @@ public class ExportExcel {
 			// 使用obj.getClass(), 而不使用field.getType(), 是因为有可能get方法返回的不是原类型
 			if (ConverterSupport.isSupport(obj.getClass(), String.class)) {
 				Optional<String> optional = ConverterSupport.convert(obj.getClass(), String.class, obj);
-				optional.orElse("");
+				return optional.orElse("");
 			}
 			return obj.toString();
 		} catch (Exception e) {
