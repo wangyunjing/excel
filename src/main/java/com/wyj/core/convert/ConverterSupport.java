@@ -19,7 +19,6 @@ public class ConverterSupport {
 		public static ConverterSupport converterSupport = new ConverterSupport();
 	}
 
-	//	private Map<ConverterMapKey, Class<? extends Converter>> map = new ConcurrentHashMap<>();
 	private Map<ConverterMapKey, ArrayList<Class<? extends Converter>>> map = new ConcurrentHashMap<>();
 
 
@@ -78,9 +77,10 @@ public class ConverterSupport {
 		if (classes == null) {
 			classes = new ArrayList<>();
 		}
-		if (!classes.contains(converter)) {
-			classes.add(0, converter);
+		if (classes.contains(converter)) {
+			classes.remove(converter);
 		}
+		classes.add(0, converter);
 		map.put(converterMapKey, classes);
 	}
 
