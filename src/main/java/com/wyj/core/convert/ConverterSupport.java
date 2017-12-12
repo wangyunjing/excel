@@ -64,6 +64,13 @@ public class ConverterSupport {
 		throw new RuntimeException("类型转换出错!", exception);
 	}
 
+	/**
+	 * 如果存在相同的转换类型,则会把新添加的放入第一个(优先使用);
+	 * 如果不存在,则添加该类型转换
+	 * @param sourceClass
+	 * @param targetClass
+	 * @param converter
+	 */
 	public static void addConvert(Class sourceClass, Class targetClass, Class<? extends Converter> converter) {
 		getInstance().doAddConvert(sourceClass, targetClass, converter);
 	}
