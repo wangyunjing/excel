@@ -9,20 +9,20 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * Created by wyj on 17-9-19.
  */
-public class ConverterSupport {
+public class ConverterService {
 
-	public static ConverterSupport getInstance() {
-		return ConverterSupportHolder.converterSupport;
+	public static ConverterService getInstance() {
+		return ConverterSupportHolder.converterService;
 	}
 
 	public static class ConverterSupportHolder {
-		public static ConverterSupport converterSupport = new ConverterSupport();
+		public static ConverterService converterService = new ConverterService();
 	}
 
-	private Map<ConverterMapKey, ArrayList<Class<? extends Converter>>> map = new ConcurrentHashMap<>();
+	private Map<ConverterPair, ArrayList<Class<? extends Converter>>> map = new ConcurrentHashMap<>();
 
 
-	private ConverterSupport() {
+	private ConverterService() {
 		this.doAddConvert(String.class, Date.class, StringToDateConverter.class);
 		this.doAddConvert(String.class, Integer.class, StringToIntegerConverter.class);
 		this.doAddConvert(String.class, Double.class, StringToDoubleConverter.class);
@@ -33,8 +33,8 @@ public class ConverterSupport {
 		if (sourceClass == null || targetClass == null) {
 			return false;
 		}
-		ConverterMapKey converterMapKey = new ConverterMapKey(sourceClass, targetClass);
-		ArrayList<Class<? extends Converter>> classes = getInstance().map.get(converterMapKey);
+		ConverterPair converterPair = new ConverterPair(sourceClass, targetClass);
+		ArrayList<Class<? extends Converter>> classes = getInstance().map.get(converterPair);
 		return classes == null ? false : true;
 	}
 
@@ -49,9 +49,9 @@ public class ConverterSupport {
 			throw new RuntimeException("sourceClass and source 类型不一致!");
 		}
 
-		ConverterMapKey converterMapKey = new ConverterMapKey(sourceClass, targetClass);
+		ConverterPair converterPair = new ConverterPair(sourceClass, targetClass);
 
-		ArrayList<Class<? extends Converter>> classes = getInstance().map.get(converterMapKey);
+		ArrayList<Class<? extends Converter>> classes = getInstance().map.get(converterPair);
 		Exception exception = null;
 		for (Class<? extends Converter> converterClass : classes) {
 			try {
@@ -79,8 +79,8 @@ public class ConverterSupport {
 		if (sourceClass == null || targetClass == null || converter == null) {
 			throw new RuntimeException("不能为空");
 		}
-		ConverterMapKey converterMapKey = new ConverterMapKey(sourceClass, targetClass);
-		ArrayList<Class<? extends Converter>> classes = map.get(converterMapKey);
+		ConverterPair converterPair = new ConverterPair(sourceClass, targetClass);
+		ArrayList<Class<? extends Converter>> classes = map.get(converterPair);
 		if (classes == null) {
 			classes = new ArrayList<>();
 		}
@@ -88,15 +88,15 @@ public class ConverterSupport {
 			classes.remove(converter);
 		}
 		classes.add(0, converter);
-		map.put(converterMapKey, classes);
+		map.put(converterPair, classes);
 	}
 
-	private static class ConverterMapKey {
+	private static class ConverterPair {
 		private Class sourceClass;
 
 		private Class targetClass;
 
-		public ConverterMapKey(Class sourceClass, Class targetClass) {
+		public ConverterPair(Class sourceClass, Class targetClass) {
 			this.sourceClass = sourceClass;
 			this.targetClass = targetClass;
 		}
@@ -114,7 +114,7 @@ public class ConverterSupport {
 			if (this == o) return true;
 			if (o == null || getClass() != o.getClass()) return false;
 
-			ConverterMapKey that = (ConverterMapKey) o;
+			ConverterPair that = (ConverterPair) o;
 
 			if (sourceClass != null ? !sourceClass.equals(that.sourceClass) : that.sourceClass != null) return false;
 			return targetClass != null ? targetClass.equals(that.targetClass) : that.targetClass == null;

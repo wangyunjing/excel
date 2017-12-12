@@ -1,6 +1,6 @@
 package com.wyj.core.excel;
 
-import com.wyj.core.convert.ConverterSupport;
+import com.wyj.core.convert.ConverterService;
 import com.wyj.core.excel.annotation.Excel;
 import com.wyj.core.excel.exception.ExcelImportException;
 import com.wyj.core.util.ClassUtils;
@@ -206,8 +206,8 @@ public class ImportExcel<T> {
 				return;
 			}
 
-			if (ConverterSupport.isSupport(String.class, fieldClass)) {
-				Optional<?> optional = ConverterSupport.convert(String.class, fieldClass, value);
+			if (ConverterService.isSupport(String.class, fieldClass)) {
+				Optional<?> optional = ConverterService.convert(String.class, fieldClass, value);
 				Object arg = optional.orElse(null);
 				ReflexUtils.invokeMethod(method, t, arg);
 				return;
