@@ -71,14 +71,22 @@ public class ExportExcel {
 		exportExcel.export();
 	}
 
-	public static Future<Void> asyncExport(ExecutorService executorService, File file, Class clazz, List dataList) {
-		FutureTask<Void> futureTask = new FutureTask<>(() -> {
+	public static CompletableFuture<Void> asyncExport(ExecutorService executorService, File file, Class clazz, List dataList) {
+		CompletableFuture<Void> completableFuture = CompletableFuture.supplyAsync(() -> {
+			ExportExcel exportExcel = new ExportExcel(file, clazz, dataList);
+			exportExcel.export();
+			return null;
+		}, executorService);
+		return completableFuture;
+	}
+
+	public static CompletableFuture<Void> asyncExport(File file, Class clazz, List dataList) {
+		CompletableFuture<Void> completableFuture = CompletableFuture.supplyAsync(() -> {
 			ExportExcel exportExcel = new ExportExcel(file, clazz, dataList);
 			exportExcel.export();
 			return null;
 		});
-		executorService.submit(futureTask);
-		return futureTask;
+		return completableFuture;
 	}
 
 	private void export() {

@@ -15,10 +15,12 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
@@ -71,6 +73,14 @@ public class ImportExcel<T> {
 			}
 		} catch (Exception e) {
 			throw new ExcelImportException("创建ImportExcel失败!", e);
+		} finally {
+			try {
+				if (inputStream != null) {
+					inputStream.close();
+				}
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 		}
 	}
 
@@ -84,23 +94,38 @@ public class ImportExcel<T> {
 		return importExcel.parse();
 	}
 
-	public static <U> Future<List<U>> asyncImport(ExecutorService executorService, InputStream inputStream,
+	public static <U> CompletableFuture<List<U>> asyncImport(ExecutorService executorService, InputStream inputStream,
 												  Class<U> clazz, boolean is03Excel) {
-		FutureTask<List<U>> futureTask = new FutureTask<>(() -> {
+		CompletableFuture<List<U>> completableFuture = CompletableFuture.supplyAsync(() -> {
+			ImportExcel<U> importExcel = new ImportExcel<>(inputStream, clazz, is03Excel);
+			return importExcel.parse();
+		}, executorService);
+		return completableFuture;
+	}
+
+	public static <U> CompletableFuture<List<U>> asyncImport(ExecutorService executorService, File file, Class<U> clazz) {
+
+		CompletableFuture<List<U>> completableFuture = CompletableFuture.supplyAsync(() -> {
+			ImportExcel<U> importExcel = new ImportExcel<>(file, clazz);
+			return importExcel.parse();
+		}, executorService);
+		return completableFuture;
+	}
+
+	public static <U> CompletableFuture<List<U>> asyncImport(InputStream inputStream, Class<U> clazz, boolean is03Excel) {
+		CompletableFuture<List<U>> completableFuture = CompletableFuture.supplyAsync(() -> {
 			ImportExcel<U> importExcel = new ImportExcel<>(inputStream, clazz, is03Excel);
 			return importExcel.parse();
 		});
-		executorService.submit(futureTask);
-		return futureTask;
+		return completableFuture;
 	}
 
-	public static <U> Future<List<U>> asyncImport(ExecutorService executorService, File file, Class<U> clazz) {
-		FutureTask<List<U>> futureTask = new FutureTask<>(() -> {
+	public static <U> CompletableFuture<List<U>> asyncImport(File file, Class<U> clazz) {
+		CompletableFuture<List<U>> completableFuture = CompletableFuture.supplyAsync(() -> {
 			ImportExcel<U> importExcel = new ImportExcel<>(file, clazz);
 			return importExcel.parse();
 		});
-		executorService.submit(futureTask);
-		return futureTask;
+		return completableFuture;
 	}
 
 
