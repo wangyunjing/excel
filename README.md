@@ -28,4 +28,4 @@
 ## 异步
 `ImportExcel.asyncImport`
 # 使用方式
-参考 `ExportExcel.main` 和 `ImportExcel.main`
+参考 单元测试
