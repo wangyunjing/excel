@@ -74,10 +74,7 @@ public class ExcelHelper {
 		Field[] declaredFields = ReflexUtils.getAllField(clazz);
 		for (Field field : declaredFields) {
 
-			if (field.isAnnotationPresent(Excel.class)) {
-				fieldList.add(ExcelFieldBuilder.newInstance(field).build());
-
-			} else if (field.isAnnotationPresent(Nesting.class)) {
+			if (field.isAnnotationPresent(Nesting.class)) {
 				// 嵌套调用
 				List<ExcelField> nestingFields = getExcelFields(field.getType(), false, existClass);
 
@@ -87,6 +84,8 @@ public class ExcelHelper {
 								.build()))
 						.collect(toList());
 				fieldList.addAll(nestingFields);
+			} else if (field.isAnnotationPresent(Excel.class)) {
+				fieldList.add(ExcelFieldBuilder.newInstance(field).build());
 			}
 		}
 
