@@ -1,7 +1,5 @@
 package com.wyj.core.excel;
 
-import com.wyj.core.excel.annotation.Excel;
-import com.wyj.core.excel.annotation.Nesting;
 import com.wyj.core.excel.exception.ExcelImportException;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
@@ -246,90 +244,6 @@ public class ImportExcel<T> {
 		public DataWrapper(T t, boolean skip) {
 			this.t = t;
 			this.skip = skip;
-		}
-	}
-
-	public static void main(String[] args) {
-		List<Person> names = syncImport(new File("/tmp/export/myname.xls"), Person.class);
-
-		System.out.println(names);
-	}
-
-	public static class Person {
-		@Nesting
-		private Name name;
-		@Excel(name = "人", order = 100)
-		private String person;
-
-		public Person() {
-		}
-
-		public Person(Name name, String person) {
-			this.name = name;
-			this.person = person;
-		}
-
-		public Name getName() {
-			return name;
-		}
-
-		public void setName(Name name) {
-			this.name = name;
-		}
-
-		public String getPerson() {
-			return person;
-		}
-
-		public void setPerson(String person) {
-			this.person = person;
-		}
-
-		@Override
-		public String toString() {
-			return "Person{" +
-					"name=" + name +
-					", person='" + person + '\'' +
-					'}';
-		}
-	}
-
-	public static class Name {
-		@Excel(name = "姓名", order = 1)
-		private String name;
-		@Excel(name = "年龄", order = 2)
-		private Integer age;
-
-		public Name() {
-		}
-
-		public Name(String name, Integer age) {
-			this.name = name;
-			this.age = age;
-		}
-
-		public String getName() {
-			return name;
-		}
-
-		public void setName(String name) {
-			this.name = name;
-		}
-
-		public Integer getAge() {
-			return age;
-		}
-
-		public void setAge(Integer age) {
-			this.age = age;
-		}
-
-		@Override
-		public String toString() {
-			return "Name{" +
-					"name='" + name + '\'' +
-					", age=" + age +
-					'}';
 		}
 	}
 }

@@ -19,7 +19,8 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
 
 /**
  * 导出Excel
@@ -174,48 +175,4 @@ public class ExportExcelNoNesting {
 		void iterator(Map.Entry<K, V> entry, Row row, int colNum);
 	}
 
-	public static void main(String[] args) throws ExecutionException, InterruptedException {
-		List<Name> list = new ArrayList<>();
-		list.add(new Name("w1", 1));
-		list.add(new Name("w2", 2));
-		list.add(new Name("w3", 3));
-		list.add(new Name("w4", 4));
-		list.add(new Name("w5", 5));
-		list.add(new Name("w6", 6));
-		Future<Void> future = ExportExcelNoNesting.asyncExport(new File("/tmp/export/myname.xls"), Name.class, list);
-		future.get();
-		System.out.println("Main end!");
-		System.out.println("end!");
-	}
-
-	public static class Name {
-		@Excel(name = "姓名", order = 1)
-		private String name;
-		@Excel(name = "姓名", order = 2)
-		private Integer age;
-
-		public Name() {
-		}
-
-		public Name(String name, Integer age) {
-			this.name = name;
-			this.age = age;
-		}
-
-		public String getName() {
-			return name;
-		}
-
-		public void setName(String name) {
-			this.name = name;
-		}
-
-		public Integer getAge() {
-			return age;
-		}
-
-		public void setAge(Integer age) {
-			this.age = age;
-		}
-	}
 }
