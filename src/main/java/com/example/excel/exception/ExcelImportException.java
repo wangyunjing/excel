@@ -1,4 +1,4 @@
-package com.wyj.core.excel.exception;
+package com.example.excel.exception;
 
 /**
  * Created by wyj on 17-12-4.

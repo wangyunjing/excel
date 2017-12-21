@@ -1,8 +1,8 @@
-package com.wyj.core.excel;
+package com.example.excel;
 
-import com.wyj.core.excel.annotation.Excel;
-import com.wyj.core.excel.exception.ExcelExportException;
-import com.wyj.core.util.Assert;
+import com.example.excel.annotation.Excel;
+import com.example.excel.exception.ExcelExportException;
+import com.example.util.Assert;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;

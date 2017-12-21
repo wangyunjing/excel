@@ -1,8 +1,7 @@
 package test;
 
-import com.wyj.core.excel.ExportExcel;
-import com.wyj.core.excel.annotation.Excel;
-import com.wyj.core.excel.annotation.Nesting;
+import com.example.excel.annotation.Excel;
+import com.example.excel.annotation.Nesting;
 
 /**
  * Created by wyj on 17-12-21.

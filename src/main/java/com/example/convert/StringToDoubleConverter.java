@@ -1,4 +1,4 @@
-package com.wyj.core.convert;
+package com.example.convert;
 
 
 import org.apache.commons.lang3.StringUtils;

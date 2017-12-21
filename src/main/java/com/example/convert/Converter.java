@@ -1,4 +1,4 @@
-package com.wyj.core.convert;
+package com.example.convert;
 
 /**
  * Created by wyj on 17-9-19.

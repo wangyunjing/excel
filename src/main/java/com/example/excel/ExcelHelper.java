@@ -1,8 +1,8 @@
-package com.wyj.core.excel;
+package com.example.excel;
 
-import com.wyj.core.excel.annotation.Excel;
-import com.wyj.core.excel.annotation.Nesting;
-import com.wyj.core.util.ReflexUtils;
+import com.example.excel.annotation.Excel;
+import com.example.excel.annotation.Nesting;
+import com.example.util.ReflexUtils;
 
 import java.lang.reflect.Field;
 import java.util.*;

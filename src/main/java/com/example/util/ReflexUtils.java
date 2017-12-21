@@ -1,4 +1,4 @@
-package com.wyj.core.util;
+package com.example.util;
 
 import java.lang.reflect.*;
 import java.util.*;

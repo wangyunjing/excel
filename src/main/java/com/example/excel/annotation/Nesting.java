@@ -1,4 +1,4 @@
-package com.wyj.core.excel.annotation;
+package com.example.excel.annotation;
 
 import java.lang.annotation.*;
 

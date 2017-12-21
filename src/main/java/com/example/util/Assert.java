@@ -1,4 +1,4 @@
-package com.wyj.core.util;
+package com.example.util;
 
 /**
  * Created by wyj on 17-10-23.

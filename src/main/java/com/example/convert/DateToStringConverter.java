@@ -1,4 +1,4 @@
-package com.wyj.core.convert;
+package com.example.convert;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;

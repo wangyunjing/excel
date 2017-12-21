@@ -1,6 +1,6 @@
-package com.wyj.core.excel;
+package com.example.excel;
 
-import com.wyj.core.excel.exception.ExcelImportException;
+import com.example.excel.exception.ExcelImportException;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.Cell;
