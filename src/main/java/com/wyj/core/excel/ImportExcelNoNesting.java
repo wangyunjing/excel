@@ -1,8 +1,10 @@
 package com.wyj.core.excel;
 
+import com.wyj.core.convert.ConverterService;
 import com.wyj.core.excel.annotation.Excel;
-import com.wyj.core.excel.annotation.Nesting;
 import com.wyj.core.excel.exception.ExcelImportException;
+import com.wyj.core.util.ClassUtils;
+import com.wyj.core.util.ReflexUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.Cell;
@@ -15,6 +17,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
@@ -30,7 +34,8 @@ import java.util.function.Consumer;
  *
  * @param <T>
  */
-public class ImportExcel<T> {
+@Deprecated
+public class ImportExcelNoNesting<T> {
 
 	private Workbook workbook;
 	private Sheet sheet;
@@ -38,14 +43,14 @@ public class ImportExcel<T> {
 
 	private Class<T> clazz;
 
-	private List<ExcelField> list = new ArrayList<>();
+	private List<Field> list = new ArrayList<>();
 
-	private ImportExcel(InputStream inputStream, Class<T> clazz, boolean is03Excel) {
+	private ImportExcelNoNesting(InputStream inputStream, Class<T> clazz, boolean is03Excel) {
 		this.clazz = clazz;
 		init(inputStream, is03Excel);
 	}
 
-	private ImportExcel(File file, Class<T> clazz) {
+	private ImportExcelNoNesting(File file, Class<T> clazz) {
 		this.clazz = clazz;
 		try (FileInputStream inputStream = new FileInputStream(file)) {
 			init(inputStream, file.getName().matches("^.+\\.(?i)(xls)$"));
@@ -61,7 +66,10 @@ public class ImportExcel<T> {
 			sheet = workbook.getSheetAt(0);
 			title = sheet.getRow(0);
 
-			list = ExcelHelper.getExcelFields(clazz);
+			List<Field> fieldList = ExcelHelper.getDeclaredFieldsOrder(clazz);
+			for (Field field : fieldList) {
+				this.list.add(field);
+			}
 		} catch (Exception e) {
 			throw new ExcelImportException("创建ImportExcel失败!", e);
 		} finally {
@@ -76,19 +84,19 @@ public class ImportExcel<T> {
 	}
 
 	public static <U> List<U> syncImport(InputStream inputStream, Class<U> clazz, boolean is03Excel) {
-		ImportExcel<U> importExcel = new ImportExcel<>(inputStream, clazz, is03Excel);
+		ImportExcelNoNesting<U> importExcel = new ImportExcelNoNesting<>(inputStream, clazz, is03Excel);
 		return importExcel.parse();
 	}
 
 	public static <U> List<U> syncImport(File file, Class<U> clazz) {
-		ImportExcel<U> importExcel = new ImportExcel<>(file, clazz);
+		ImportExcelNoNesting<U> importExcel = new ImportExcelNoNesting<>(file, clazz);
 		return importExcel.parse();
 	}
 
 	public static <U> CompletableFuture<List<U>> asyncImport(ExecutorService executorService, InputStream inputStream,
-															 Class<U> clazz, boolean is03Excel) {
+												  Class<U> clazz, boolean is03Excel) {
 		CompletableFuture<List<U>> completableFuture = CompletableFuture.supplyAsync(() -> {
-			ImportExcel<U> importExcel = new ImportExcel<>(inputStream, clazz, is03Excel);
+			ImportExcelNoNesting<U> importExcel = new ImportExcelNoNesting<>(inputStream, clazz, is03Excel);
 			return importExcel.parse();
 		}, executorService);
 		return completableFuture;
@@ -97,7 +105,7 @@ public class ImportExcel<T> {
 	public static <U> CompletableFuture<List<U>> asyncImport(ExecutorService executorService, File file, Class<U> clazz) {
 
 		CompletableFuture<List<U>> completableFuture = CompletableFuture.supplyAsync(() -> {
-			ImportExcel<U> importExcel = new ImportExcel<>(file, clazz);
+			ImportExcelNoNesting<U> importExcel = new ImportExcelNoNesting<>(file, clazz);
 			return importExcel.parse();
 		}, executorService);
 		return completableFuture;
@@ -105,7 +113,7 @@ public class ImportExcel<T> {
 
 	public static <U> CompletableFuture<List<U>> asyncImport(InputStream inputStream, Class<U> clazz, boolean is03Excel) {
 		CompletableFuture<List<U>> completableFuture = CompletableFuture.supplyAsync(() -> {
-			ImportExcel<U> importExcel = new ImportExcel<>(inputStream, clazz, is03Excel);
+			ImportExcelNoNesting<U> importExcel = new ImportExcelNoNesting<>(inputStream, clazz, is03Excel);
 			return importExcel.parse();
 		});
 		return completableFuture;
@@ -113,7 +121,7 @@ public class ImportExcel<T> {
 
 	public static <U> CompletableFuture<List<U>> asyncImport(File file, Class<U> clazz) {
 		CompletableFuture<List<U>> completableFuture = CompletableFuture.supplyAsync(() -> {
-			ImportExcel<U> importExcel = new ImportExcel<>(file, clazz);
+			ImportExcelNoNesting<U> importExcel = new ImportExcelNoNesting<>(file, clazz);
 			return importExcel.parse();
 		});
 		return completableFuture;
@@ -150,10 +158,22 @@ public class ImportExcel<T> {
 				if (j >= list.size()) {
 					break;
 				}
+
+				// 获取字段名称
+				String fieldName = list.get(j).getName();
+
+				// 得到set函数
+				String methodName = "set" + fieldName.substring(0, 1).toUpperCase() + fieldName.substring(1);
+
+				// 获取方法, 但是不知道参数类型, 一定要传入null
+				Method method = ClassUtils.getMethodByName(clazz, methodName, null);
+
 				// 得到表格的值
 				String fieldValue = this.cellValueToString(row.getCell(j));
+
+				// 赋值
 				if (!StringUtils.isEmpty(fieldValue)) {
-					list.get(j).set(instance, fieldValue);
+					setFieldValue(instance, method, fieldValue);
 					flag = true;
 				}
 			}
@@ -178,6 +198,28 @@ public class ImportExcel<T> {
 				return null;
 		}
 	}
+
+	private void setFieldValue(T t, Method method, String value) {
+		try {
+			Class<?> fieldClass = method.getParameterTypes()[0];
+			if (fieldClass == String.class) {
+				ReflexUtils.invokeMethod(method, t, value);
+				return;
+			}
+
+			if (ConverterService.isSupport(String.class, fieldClass)) {
+				Optional<?> optional = ConverterService.convert(String.class, fieldClass, value);
+				Object arg = optional.orElse(null);
+				ReflexUtils.invokeMethod(method, t, arg);
+				return;
+			}
+
+			throw new RuntimeException("不支持String转换成" + fieldClass.getName());
+		} catch (Exception e) {
+			throw new ExcelImportException("设置字段值出错!", e);
+		}
+	}
+
 
 	private Iterator<T> iterator() {
 		return new Itr();
@@ -250,54 +292,15 @@ public class ImportExcel<T> {
 	}
 
 	public static void main(String[] args) {
-		List<Person> names = syncImport(new File("/tmp/export/myname.xls"), Person.class);
+		List<Name> names = syncImport(new File("/tmp/export/myname.xls"), Name.class);
 
 		System.out.println(names);
 	}
 
-	public static class Person {
-		@Nesting
-		private Name name;
-		@Excel(name = "人", order = 100)
-		private String person;
-
-		public Person() {
-		}
-
-		public Person(Name name, String person) {
-			this.name = name;
-			this.person = person;
-		}
-
-		public Name getName() {
-			return name;
-		}
-
-		public void setName(Name name) {
-			this.name = name;
-		}
-
-		public String getPerson() {
-			return person;
-		}
-
-		public void setPerson(String person) {
-			this.person = person;
-		}
-
-		@Override
-		public String toString() {
-			return "Person{" +
-					"name=" + name +
-					", person='" + person + '\'' +
-					'}';
-		}
-	}
-
 	public static class Name {
-		@Excel(name = "姓名", order = 1)
+		@Excel(order = 1)
 		private String name;
-		@Excel(name = "年龄", order = 2)
+		@Excel(order = 2)
 		private Integer age;
 
 		public Name() {
@@ -332,4 +335,5 @@ public class ImportExcel<T> {
 					'}';
 		}
 	}
+
 }

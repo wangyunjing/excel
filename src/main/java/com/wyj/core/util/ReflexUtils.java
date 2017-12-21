@@ -29,6 +29,28 @@ public class ReflexUtils {
 			new ConcurrentHashMap<>(DEFAULT_INITIAL_CAPACITY, DEFAULT_LOAD_FACTOR,
 					DEFAULT_CONCURRENCY_LEVEL);
 
+	// 通过get方法获取字段值
+	public static Object getFieldValue(Class clazz, Object instance, Field field) {
+		String fieldName = field.getName();
+		String methodName = "get" + fieldName.substring(0, 1).toUpperCase() + fieldName.substring(1);
+
+		// 获取没有参数的方法
+		Method method = ClassUtils.getMethodByName(clazz, methodName);
+
+		return ReflexUtils.invokeMethod(method, instance);
+	}
+
+	// 通过set方法设置字段值
+	public static Object setFieldValue(Class clazz, Object instance, Field field, Object value) {
+		String fieldName = field.getName();
+		String methodName = "set" + fieldName.substring(0, 1).toUpperCase() + fieldName.substring(1);
+
+		// 获取没有参数的方法
+		Method method = ClassUtils.getMethodByName(clazz, methodName, null);
+
+		return ReflexUtils.invokeMethod(method, instance, value);
+	}
+
 	public static Field[] getAllField(Class<?> clazz) {
 		Assert.notNull(clazz);
 		List<Field> list = new ArrayList<>(32);
@@ -83,19 +105,6 @@ public class ReflexUtils {
 		}
 		return result;
 	}
-
-	public static void setField(Field field, Object target, Object value) {
-		Assert.notNull(field);
-		Assert.notNull(target);
-		try {
-			field.set(target, value);
-		} catch (IllegalAccessException ex) {
-			handleReflectionException(ex);
-			throw new IllegalStateException(
-					"Unexpected reflection exception - " + ex.getClass().getName() + ": " + ex.getMessage());
-		}
-	}
-
 
 	public static Object invokeMethod(Method method, Object target) {
 		Assert.notNull(method);
