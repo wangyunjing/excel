@@ -23,7 +23,7 @@ public class Main {
 	@Before
 	public void before() {
 		tmpDir = System.getProperty("java.io.tmpdir");
-		file = new File(tmpDir + File.separator + "export" + File.separator + "myname.xls");
+		file = new File(tmpDir + File.separator + "export" + File.separator + "myname.xlsx");
 		System.out.println("文件路径:" + file.getAbsolutePath());
 	}
 
