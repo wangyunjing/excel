@@ -18,6 +18,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.math.BigDecimal;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
@@ -188,7 +189,7 @@ public class ImportExcelNoNesting<T> {
 		}
 		switch (cell.getCellTypeEnum()) {
 			case NUMERIC: // 数字
-				return String.valueOf(cell.getNumericCellValue());
+				return new BigDecimal(String.valueOf(cell.getNumericCellValue())).toPlainString();
 			case STRING: // 字符串
 				return cell.getStringCellValue();
 			case BOOLEAN: // Boolean

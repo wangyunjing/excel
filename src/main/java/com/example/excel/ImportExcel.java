@@ -13,6 +13,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.math.BigDecimal;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
@@ -167,7 +168,7 @@ public class ImportExcel<T> {
 		}
 		switch (cell.getCellTypeEnum()) {
 			case NUMERIC: // 数字
-				return String.valueOf(cell.getNumericCellValue());
+				return new BigDecimal(String.valueOf(cell.getNumericCellValue())).toPlainString();
 			case STRING: // 字符串
 				return cell.getStringCellValue();
 			case BOOLEAN: // Boolean
