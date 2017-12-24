@@ -24,30 +24,6 @@ public class ExcelHelper {
 		excelFieldMap = new ConcurrentHashMap<>(32);
 	}
 
-	// 不支持嵌套
-	@Deprecated
-	public static List<Field> getDeclaredFieldsOrder(Class clazz) {
-		if (fieldMap.get(clazz) != null) {
-			return fieldMap.get(clazz);
-		}
-		Field[] declaredFields = ReflexUtils.getAllField(clazz);
-		List<Field> fieldList = new ArrayList<>();
-		for (Field field : declaredFields) {
-			if (field.isAnnotationPresent(Excel.class)) {
-				fieldList.add(field);
-			}
-		}
-
-		List<Field> collect = fieldList.stream().sorted((f1, f2) -> {
-			Excel excel1 = f1.getAnnotation(Excel.class);
-			Excel excel2 = f2.getAnnotation(Excel.class);
-			return excel1.order() - excel2.order();
-		}).collect(toList());
-
-		fieldMap.put(clazz, collect);
-		return collect;
-	}
-
 	// 支持嵌套
 	public static List<ExcelField> getExcelFields(Class clazz) {
 		// 查询缓存

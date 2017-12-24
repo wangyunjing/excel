@@ -1,5 +1,6 @@
 package com.example.excel;
 
+import com.example.excel.annotation.Excel;
 import com.example.excel.exception.ExcelImportException;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
@@ -38,6 +39,7 @@ public class ImportExcel<T> {
 	private Class<T> clazz;
 
 	private List<ExcelField> list = new ArrayList<>();
+	private List<String> titleList;
 
 	private ImportExcel(InputStream inputStream, Class<T> clazz, boolean is03Excel) {
 		this.clazz = clazz;
@@ -120,6 +122,15 @@ public class ImportExcel<T> {
 
 
 	private List<T> parse() {
+		// 解析标题
+		for (int i = 0; i < title.getLastCellNum(); i++) {
+			if (titleList == null) {
+				titleList = new LinkedList<>();
+			}
+			titleList.add(cellValueToString(title.getCell(i)));
+		}
+
+		// 解析数据
 		List<T> list = new LinkedList<>();
 		Itr itr = (Itr) iterator();
 
@@ -141,18 +152,28 @@ public class ImportExcel<T> {
 		boolean flag = false;
 		try {
 			instance = clazz.newInstance();
+			int excelFieldCol = -1;
 			for (int j = 0; j < row.getLastCellNum(); j++) {
-				Cell titleCell = title.getCell(j);
-				if (titleCell == null) {
-					continue;
-				}
-				if (j >= list.size()) {
+
+				// 防止下标越界以及提前跳出循环
+				if (excelFieldCol >= list.size() - 1) {
 					break;
 				}
+
+				// 判断是否@Excel#name和title是否相同
+				String titleName = titleList.get(j);
+				String excelName = list.get(excelFieldCol + 1).getAnnotation(Excel.class).name();
+				if ("".equals(excelName) || ("".equals(excelName) && titleName == null) ||
+						excelName.equals(titleName)) {
+					excelFieldCol++;
+				} else {
+					continue;
+				}
+
 				// 得到表格的值
 				String fieldValue = this.cellValueToString(row.getCell(j));
 				if (!StringUtils.isEmpty(fieldValue)) {
-					list.get(j).set(instance, fieldValue);
+					list.get(excelFieldCol).set(instance, fieldValue);
 					flag = true;
 				}
 			}
