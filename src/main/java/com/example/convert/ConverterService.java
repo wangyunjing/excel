@@ -24,9 +24,18 @@ public class ConverterService {
 
 	private ConverterService() {
 		this.doAddConvert(String.class, Date.class, StringToDateConverter.class);
+		this.doAddConvert(String.class, Boolean.class, StringToBooleanConverter.class);
+		this.doAddConvert(String.class, Short.class, StringToShortConverter.class);
 		this.doAddConvert(String.class, Integer.class, StringToIntegerConverter.class);
+		this.doAddConvert(String.class, Long.class, StringToLongConverter.class);
 		this.doAddConvert(String.class, Double.class, StringToDoubleConverter.class);
+
 		this.doAddConvert(Date.class, String.class, DateToStringConverter.class);
+		this.doAddConvert(Boolean.class, String.class, BooleanToStringConverter.class);
+		this.doAddConvert(Short.class, String.class, ShortToStringConverter.class);
+		this.doAddConvert(Integer.class, String.class, IntegerToStringConverter.class);
+		this.doAddConvert(Long.class, String.class, LongToStringConverter.class);
+		this.doAddConvert(Double.class, String.class, DoubleToStringConverter.class);
 	}
 
 	public static boolean isSupport(Class sourceClass, Class targetClass) {
