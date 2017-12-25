@@ -20,6 +20,8 @@
 `ConverterSupport` : 全局(有一些默认配置, 可以替换)
 
 通过 `addConvert` 方法可以加入自定义的转换类型 
+如果没有对应的某一类型转换成String, 那么默认使用toString()
+
 # 导出Excel
 ## 同步
 `ExportExcel.syncExport`
