@@ -38,7 +38,7 @@ public class ExcelField {
 	}
 
 	// 通过get方法获取值
-	public <T> T get(Object object, Class<T> targetClazz) {
+	public Object get(Object object) {
 		Class sourceClazz = object.getClass();
 
 		for (Field field : getRoute()) {
@@ -48,21 +48,7 @@ public class ExcelField {
 			}
 			sourceClazz = field.getType();
 		}
-
-		if (sourceClazz == targetClazz) {
-			return (T) object;
-		}
-
-		if (ConverterService.isSupport(sourceClazz, targetClazz)) {
-			Optional<T> optional = ConverterService.convert(sourceClazz, targetClazz, object);
-			return optional.orElse(null);
-		}
-
-		if (targetClazz == String.class) {
-			return (T) (object.toString());
-		}
-
-		return null;
+		return object;
 	}
 
 	public void set(Object instance, Object value) {

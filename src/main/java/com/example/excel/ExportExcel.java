@@ -1,5 +1,6 @@
 package com.example.excel;
 
+import com.example.convert.ConverterService;
 import com.example.excel.annotation.Excel;
 import com.example.excel.exception.ExcelExportException;
 import com.example.util.Assert;
@@ -13,10 +14,7 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 
@@ -146,8 +144,27 @@ public class ExportExcel {
 	}
 
 	private String getFieldValue(Object t, ExcelField excelField) {
-		String s = excelField.get(t, String.class);
-		return s == null ? "" : s;
+		String convert = convert(excelField.get(t));
+
+		return convert == null ? "" : convert;
+	}
+
+	private String convert(Object object) {
+		if (object == null) {
+			return null;
+		}
+		Class sourceClass = object.getClass();
+		Class targetClass = String.class;
+
+		if (sourceClass == targetClass) {
+			return (String) object;
+		}
+
+		if (ConverterService.isSupport(sourceClass, targetClass)) {
+			Optional<String> optional = ConverterService.convert(sourceClass, targetClass, object);
+			return optional.orElse(object.toString());
+		}
+		return object.toString();
 	}
 
 	interface IteratorMap<K, V> {
