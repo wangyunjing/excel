@@ -41,7 +41,7 @@ public class ExportExcel {
 	private Map<ExcelField, Excel> map = new LinkedHashMap<>();
 
 	private ExportExcel(File file, Class clazz, List dataList) {
-		Assert.notNull(clazz, "file must not be null");
+		Assert.notNull(file, "file must not be null");
 		Assert.notNull(clazz, "clazz must not be null");
 		Assert.notNull(dataList, "dataList must not be null");
 
