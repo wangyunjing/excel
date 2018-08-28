@@ -1,8 +1,8 @@
 package test;
 
-import com.example.excel.ExportExcel;
-import com.example.excel.ImportExcel;
-import com.example.excel.ImportExcelOptions;
+import com.wyj.excel.ExportExcel;
+import com.wyj.excel.ImportExcel;
+import com.wyj.excel.ImportExcelOptions;
 import org.junit.Before;
 import org.junit.Test;
 

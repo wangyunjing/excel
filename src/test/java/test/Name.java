@@ -1,6 +1,6 @@
 package test;
 
-import com.example.excel.annotation.Excel;
+import com.wyj.excel.annotation.Excel;
 
 /**
  * Created by wyj on 17-12-21.
