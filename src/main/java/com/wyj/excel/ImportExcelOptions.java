@@ -27,6 +27,7 @@ public class ImportExcelOptions {
     // sheet 所在的位置
     private Integer sheetIdx;
 
+    // 标题所在的行
     private Integer titleRow;
 
     // 是否是xsl格式的excel

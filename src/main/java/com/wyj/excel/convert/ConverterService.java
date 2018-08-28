@@ -2,7 +2,10 @@ package com.wyj.excel.convert;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Created by wyj on 17-9-19.
@@ -14,19 +17,37 @@ public class ConverterService {
     static {
         addConvert(DEFAULT_MAP, String.class, Date.class, new StringToDateConverter());
         addConvert(DEFAULT_MAP, String.class, Boolean.class, new StringToBooleanConverter());
+        addConvert(DEFAULT_MAP, String.class, boolean.class, new StringToBooleanConverter());
+        addConvert(DEFAULT_MAP, String.class, Byte.class, new StringToByteConverter());
+        addConvert(DEFAULT_MAP, String.class, byte.class, new StringToByteConverter());
         addConvert(DEFAULT_MAP, String.class, Short.class, new StringToShortConverter());
+        addConvert(DEFAULT_MAP, String.class, short.class, new StringToShortConverter());
         addConvert(DEFAULT_MAP, String.class, Integer.class, new StringToIntegerConverter());
+        addConvert(DEFAULT_MAP, String.class, int.class, new StringToIntegerConverter());
         addConvert(DEFAULT_MAP, String.class, Long.class, new StringToLongConverter());
+        addConvert(DEFAULT_MAP, String.class, long.class, new StringToLongConverter());
+        addConvert(DEFAULT_MAP, String.class, Float.class, new StringToFloatConverter());
+        addConvert(DEFAULT_MAP, String.class, float.class, new StringToFloatConverter());
         addConvert(DEFAULT_MAP, String.class, Double.class, new StringToDoubleConverter());
+        addConvert(DEFAULT_MAP, String.class, double.class, new StringToDoubleConverter());
         addConvert(DEFAULT_MAP, String.class, BigInteger.class, new StringToBigIntegerConverter());
         addConvert(DEFAULT_MAP, String.class, BigDecimal.class, new StringToBigDecimalConverter());
 
         addConvert(DEFAULT_MAP, Date.class, String.class, new DateToStringConverter());
         addConvert(DEFAULT_MAP, Boolean.class, String.class, new BooleanToStringConverter());
+        addConvert(DEFAULT_MAP, boolean.class, String.class, new BooleanToStringConverter());
+        addConvert(DEFAULT_MAP, Byte.class, String.class, new ByteToStringConverter());
+        addConvert(DEFAULT_MAP, byte.class, String.class, new ByteToStringConverter());
         addConvert(DEFAULT_MAP, Short.class, String.class, new ShortToStringConverter());
+        addConvert(DEFAULT_MAP, short.class, String.class, new ShortToStringConverter());
         addConvert(DEFAULT_MAP, Integer.class, String.class, new IntegerToStringConverter());
+        addConvert(DEFAULT_MAP, int.class, String.class, new IntegerToStringConverter());
         addConvert(DEFAULT_MAP, Long.class, String.class, new LongToStringConverter());
+        addConvert(DEFAULT_MAP, long.class, String.class, new LongToStringConverter());
+        addConvert(DEFAULT_MAP, Float.class, String.class, new FloatToStringConverter());
+        addConvert(DEFAULT_MAP, float.class, String.class, new FloatToStringConverter());
         addConvert(DEFAULT_MAP, Double.class, String.class, new DoubleToStringConverter());
+        addConvert(DEFAULT_MAP, double.class, String.class, new DoubleToStringConverter());
         addConvert(DEFAULT_MAP, BigInteger.class, String.class, new BigIntegerToStringConverter());
         addConvert(DEFAULT_MAP, BigDecimal.class, String.class, new BigDecimalToStringConverter());
     }

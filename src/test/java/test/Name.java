@@ -9,12 +9,12 @@ public class Name {
 	@Excel(name = "姓名", order = 1)
 	private String name;
 	@Excel(name = "年龄", order = 2)
-	private Integer age;
+	private int age;
 
 	public Name() {
 	}
 
-	public Name(String name, Integer age) {
+	public Name(String name, int age) {
 		this.name = name;
 		this.age = age;
 	}
@@ -27,11 +27,11 @@ public class Name {
 		this.name = name;
 	}
 
-	public Integer getAge() {
+	public int getAge() {
 		return age;
 	}
 
-	public void setAge(Integer age) {
+	public void setAge(int age) {
 		this.age = age;
 	}
 
