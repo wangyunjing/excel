@@ -18,4 +18,7 @@ public @interface Excel {
 	String name() default ""; // 标题
 
 	int order() default Integer.MIN_VALUE; // 排序
+
+	// 如果是空字符串"", 则该属性为null
+	boolean emptyToNull() default true;
 }

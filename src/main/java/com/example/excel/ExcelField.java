@@ -1,6 +1,7 @@
 package com.example.excel;
 
 import com.example.convert.ConverterService;
+import com.example.excel.annotation.Excel;
 import com.example.util.ReflexUtils;
 
 import java.lang.annotation.Annotation;
@@ -12,10 +13,24 @@ import java.util.Optional;
  */
 public class ExcelField {
 
+	private Excel excel;
+
+	private ConverterService converterService;
+
 	private Field[] route;
 
-	public ExcelField(Field[] route) {
+	public ExcelField(Excel excel, ConverterService converterService, Field[] route) {
+		this.excel = excel;
+		this.converterService = converterService == null ? ConverterService.create() : converterService;
 		this.route = route;
+	}
+
+	public Excel getExcel() {
+		return excel;
+	}
+
+	public ConverterService getConverterService() {
+		return converterService;
 	}
 
 	public Field[] getRoute() {
@@ -42,7 +57,7 @@ public class ExcelField {
 		Class sourceClazz = object.getClass();
 
 		for (Field field : getRoute()) {
-			object = ReflexUtils.getFieldValue(sourceClazz, object, field);
+			object = ReflexUtils.getFieldValue(sourceClazz, object, field.getName());
 			if (object == null) {
 				return null;
 			}
@@ -52,12 +67,18 @@ public class ExcelField {
 	}
 
 	public void set(Object instance, Object value) {
+		if (value == null) {
+			return;
+		}
+        if (excel.emptyToNull() && "".equals(value)) {
+            return;
+        }
 		if (route == null || route.length == 0) {
 			return;
 		}
 		for (int i = 0; i < route.length - 1; i++) {
 			Field field = route[i];
-			Object fieldValue = ReflexUtils.getFieldValue(instance.getClass(), instance, field);
+			Object fieldValue = ReflexUtils.getFieldValue(instance.getClass(), instance, field.getName());
 
 			if (fieldValue == null) {
 				try {
@@ -65,7 +86,7 @@ public class ExcelField {
 				} catch (Exception e) {
 					throw new RuntimeException("创建" + field.getType() + "实例失败");
 				}
-				ReflexUtils.setFieldValue(instance.getClass(), instance, field, fieldValue);
+				ReflexUtils.setFieldValue(instance.getClass(), instance, field.getName(), fieldValue);
 			}
 
 			instance = fieldValue;
@@ -76,18 +97,11 @@ public class ExcelField {
 		Class sourceClass = value.getClass();
 		Class targetClass = field.getType();
 
-		if (sourceClass == targetClass) {
-			ReflexUtils.setFieldValue(instance.getClass(), instance, field, value);
+		if (targetClass.isAssignableFrom(sourceClass)) {
+			ReflexUtils.setFieldValue(instance.getClass(), instance, field.getName(), targetClass.cast(value));
 			return;
 		}
-
-		if (ConverterService.isSupport(sourceClass, targetClass)) {
-			Optional<?> optional = ConverterService.convert(sourceClass, targetClass, value);
-			Object arg = optional.orElse(null);
-
-			ReflexUtils.setFieldValue(instance.getClass(), instance, field, arg);
-			return;
-		}
-		throw new RuntimeException("不支持" + sourceClass + "转换成" + targetClass);
+		Object convert = converterService.convert(sourceClass, targetClass, value);
+		ReflexUtils.setFieldValue(instance.getClass(), instance, field.getName(), convert);
 	}
 }

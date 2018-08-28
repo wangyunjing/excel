@@ -2,6 +2,7 @@ package test;
 
 import com.example.excel.ExportExcel;
 import com.example.excel.ImportExcel;
+import com.example.excel.ImportExcelOptions;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -27,12 +28,12 @@ public class Main {
 		System.out.println("文件路径:" + file.getAbsolutePath());
 	}
 
-	@Test
+//	@Test
 	public void testExportExcel() throws ExecutionException, InterruptedException {
 		List<Person> personList = new ArrayList<>();
-		personList.add(new Person(new Name("w1", 1), "person1"));
-		personList.add(new Person(new Name("w2", 2), "person2"));
-		personList.add(new Person(new Name("w3", 3), "person3"));
+		personList.add(new Person(new Name("w1", 1), "  person1"));
+		personList.add(new Person(new Name("w2", 2), " person2"));
+		personList.add(new Person(new Name("w3 ", 3), "person3"));
 		personList.add(new Person(new Name("w4", 4), "person4"));
 
 
@@ -44,7 +45,11 @@ public class Main {
 
 	@Test
 	public void testImportExcel() {
-		List<Person> names = ImportExcel.syncImport(file, Person.class);
+		ImportExcelOptions options = ImportExcelOptions.ImportExcelOptionsBuilder.<Person>create()
+				.setPredicate(person -> person.getName().getAge() != null)
+				.build();
+		List<Person> names = ImportExcel.execute(new File("D:\\test\\test.xlsx"), Person.class, options);
+//		List<Person> names = ImportExcel.execute(file, Person.class, options);
 		System.out.println(names);
 	}
 

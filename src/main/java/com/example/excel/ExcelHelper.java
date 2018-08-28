@@ -1,5 +1,6 @@
 package com.example.excel;
 
+import com.example.convert.ConverterService;
 import com.example.excel.annotation.Excel;
 import com.example.excel.annotation.Nesting;
 import com.example.util.ReflexUtils;
@@ -15,30 +16,28 @@ import static java.util.stream.Collectors.toList;
  */
 public class ExcelHelper {
 
-	private static Map<Class, List<Field>> fieldMap;
-
 	private static Map<Class, List<ExcelField>> excelFieldMap;
 
 	static {
-		fieldMap = new ConcurrentHashMap<>(32);
 		excelFieldMap = new ConcurrentHashMap<>(32);
 	}
 
 	// 支持嵌套
-	public static List<ExcelField> getExcelFields(Class clazz) {
+	public static List<ExcelField> getExcelFields(Class clazz, ConverterService converterService) {
 		// 查询缓存
 		if (excelFieldMap.get(clazz) != null) {
 			return excelFieldMap.get(clazz);
 		}
 
-		List<ExcelField> excelFields = getExcelFields(clazz, true, new HashSet<>());
+		List<ExcelField> excelFields = getExcelFields(clazz, converterService, true, new HashSet<>());
 
 		// 添加缓存
 		excelFieldMap.put(clazz, excelFields);
 		return excelFields;
 	}
 
-	private static List<ExcelField> getExcelFields(Class clazz, boolean isOrder, Set<Class> existClass) {
+	private static List<ExcelField> getExcelFields(Class clazz, ConverterService converterService,
+												   boolean isOrder, Set<Class> existClass) {
 		// 防止死循环(不是一个拓扑结构,存在循环嵌套)
 		if (existClass.contains(clazz)) {
 			return new ArrayList<>();
@@ -51,17 +50,22 @@ public class ExcelHelper {
 		for (Field field : declaredFields) {
 
 			if (field.isAnnotationPresent(Nesting.class)) {
-				// 嵌套调用
-				List<ExcelField> nestingFields = getExcelFields(field.getType(), false, existClass);
+				// 嵌套调用 (无需每一步都排序，只要最后一次排序就可以)
+				List<ExcelField> nestingFields = getExcelFields(field.getType(), converterService, false, existClass);
 
 				nestingFields = nestingFields.stream()
-						.map((excelField -> ExcelFieldBuilder.newInstance(field)
+						.map(excelField -> ExcelFieldBuilder.newInstance(field)
 								.addField(excelField.getRoute())
-								.build()))
+								.setConverterService(excelField.getConverterService())
+								.setExcel(excelField.getExcel())
+								.build())
 						.collect(toList());
 				fieldList.addAll(nestingFields);
 			} else if (field.isAnnotationPresent(Excel.class)) {
-				fieldList.add(ExcelFieldBuilder.newInstance(field).build());
+				fieldList.add(ExcelFieldBuilder.newInstance(field)
+						.setConverterService(converterService)
+						.setExcel(field.getAnnotation(Excel.class))
+						.build());
 			}
 		}
 

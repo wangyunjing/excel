@@ -15,7 +15,7 @@ public class DateToStringConverter implements Converter<Date, String> {
 	@Override
 	public String convert(Date date) {
 		if (date == null) {
-			return "";
+			return null;
 		}
 		SimpleDateFormat sdf = new SimpleDateFormat(format);
 		sdf.setTimeZone(TimeZone.getTimeZone("Asia/Shanghai"));

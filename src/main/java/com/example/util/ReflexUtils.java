@@ -29,25 +29,35 @@ public class ReflexUtils {
 			new ConcurrentHashMap<>(DEFAULT_INITIAL_CAPACITY, DEFAULT_LOAD_FACTOR,
 					DEFAULT_CONCURRENCY_LEVEL);
 
+	private static final Map<String, Method> getMethodCache = new ConcurrentHashMap<>(DEFAULT_INITIAL_CAPACITY, DEFAULT_LOAD_FACTOR,
+			DEFAULT_CONCURRENCY_LEVEL);
+
+	private static final Map<String, Method> setMethodCache = new ConcurrentHashMap<>(DEFAULT_INITIAL_CAPACITY, DEFAULT_LOAD_FACTOR,
+			DEFAULT_CONCURRENCY_LEVEL);
+
 	// 通过get方法获取字段值
-	public static Object getFieldValue(Class clazz, Object instance, Field field) {
-		String fieldName = field.getName();
+	public static Object getFieldValue(Class clazz, Object instance, String fieldName) {
 		String methodName = "get" + fieldName.substring(0, 1).toUpperCase() + fieldName.substring(1);
-
+		String key = clazz.getName() + "#" + methodName;
 		// 获取没有参数的方法
-		Method method = ClassUtils.getMethodByName(clazz, methodName);
-
+		Method method = getMethodCache.get(key);
+		if (method == null) {
+			method = ClassUtils.getMethodByName(clazz, methodName);
+			getMethodCache.put(key, method);
+		}
 		return ReflexUtils.invokeMethod(method, instance);
 	}
 
 	// 通过set方法设置字段值
-	public static Object setFieldValue(Class clazz, Object instance, Field field, Object value) {
-		String fieldName = field.getName();
+	public static Object setFieldValue(Class clazz, Object instance, String fieldName, Object value) {
 		String methodName = "set" + fieldName.substring(0, 1).toUpperCase() + fieldName.substring(1);
-
+		String key = clazz.getName() + "#" + methodName;
 		// 获取没有参数的方法
-		Method method = ClassUtils.getMethodByName(clazz, methodName, null);
-
+		Method method = setMethodCache.get(key);
+		if (method == null) {
+			method = ClassUtils.getMethodByName(clazz, methodName, null);
+			setMethodCache.put(key, method);
+		}
 		return ReflexUtils.invokeMethod(method, instance, value);
 	}
 

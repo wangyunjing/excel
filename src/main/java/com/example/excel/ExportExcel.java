@@ -10,6 +10,8 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -24,151 +26,157 @@ import java.util.concurrent.ExecutorService;
  */
 public class ExportExcel {
 
-	private File file;
+    private static final Logger log = LoggerFactory.getLogger(ExportExcel.class);
 
-	private Workbook workbook;
+    private File file;
 
-	private Sheet sheet;
+    private Workbook workbook;
 
-	private boolean is03Excel;
+    private Sheet sheet;
 
-	private Class clazz;
+    private boolean is03Excel;
 
-	// 导出的数据
-	private List dataList;
+    private Class clazz;
 
-	// 插入顺序
-	private Map<ExcelField, Excel> map = new LinkedHashMap<>();
+    // 导出的数据
+    private List dataList;
 
-	private ExportExcel(File file, Class clazz, List dataList) {
-		Assert.notNull(file, "file must not be null");
-		Assert.notNull(clazz, "clazz must not be null");
-		Assert.notNull(dataList, "dataList must not be null");
+    // 插入顺序
+    private Map<ExcelField, Excel> map = new LinkedHashMap<>();
 
-		this.file = file;
-		this.dataList = dataList;
-		this.clazz = clazz;
-		init();
-	}
+    private ConverterService converterService;
 
-	private void init() {
-		List<ExcelField> fieldList = ExcelHelper.getExcelFields(clazz);
-		for (ExcelField field : fieldList) {
-			Excel excel = field.getAnnotation(Excel.class);
-			map.put(field, excel);
-		}
+    private ExportExcel(File file, Class clazz, List dataList) {
+        Assert.notNull(file, "file must not be null");
+        Assert.notNull(clazz, "clazz must not be null");
+        Assert.notNull(dataList, "dataList must not be null");
 
-		this.is03Excel = file.getName().matches("^.+\\.(?i)(xls)$");
-		this.workbook = is03Excel ? new HSSFWorkbook() : new XSSFWorkbook();
-		this.sheet = workbook.createSheet();
-	}
+        this.file = file;
+        this.dataList = dataList;
+        this.clazz = clazz;
+        // TODO: 2018/8/28 设置Options
+        this.converterService = ConverterService.create();
+        init();
+    }
 
-	public static void syncExport(File file, Class clazz, List dataList) {
-		ExportExcel exportExcel = new ExportExcel(file, clazz, dataList);
-		exportExcel.export();
-	}
+    private void init() {
+        List<ExcelField> fieldList = ExcelHelper.getExcelFields(clazz, converterService);
+        for (ExcelField field : fieldList) {
+            Excel excel = field.getAnnotation(Excel.class);
+            map.put(field, excel);
+        }
 
-	public static CompletableFuture<Void> asyncExport(ExecutorService executorService, File file, Class clazz, List dataList) {
-		CompletableFuture<Void> completableFuture = CompletableFuture.supplyAsync(() -> {
-			ExportExcel exportExcel = new ExportExcel(file, clazz, dataList);
-			exportExcel.export();
-			return null;
-		}, executorService);
-		return completableFuture;
-	}
+        this.is03Excel = file.getName().matches("^.+\\.(?i)(xls)$");
+        this.workbook = is03Excel ? new HSSFWorkbook() : new XSSFWorkbook();
+        this.sheet = workbook.createSheet();
+    }
 
-	public static CompletableFuture<Void> asyncExport(File file, Class clazz, List dataList) {
-		CompletableFuture<Void> completableFuture = CompletableFuture.supplyAsync(() -> {
-			ExportExcel exportExcel = new ExportExcel(file, clazz, dataList);
-			exportExcel.export();
-			return null;
-		});
-		return completableFuture;
-	}
+    public static void syncExport(File file, Class clazz, List dataList) {
+        ExportExcel exportExcel = new ExportExcel(file, clazz, dataList);
+        exportExcel.export();
+    }
 
-	private void export() {
-		try {
-			createTitle();
-			createContent();
-			saveToFile();
-		} catch (Exception e) {
-			throw new ExcelExportException("excel export error!", e);
-		}
-	}
+    public static CompletableFuture<Void> asyncExport(ExecutorService executorService, File file, Class clazz, List dataList) {
+        CompletableFuture<Void> completableFuture = CompletableFuture.supplyAsync(() -> {
+            ExportExcel exportExcel = new ExportExcel(file, clazz, dataList);
+            exportExcel.export();
+            return null;
+        }, executorService);
+        return completableFuture;
+    }
 
-	private void createTitle() {
-		createRow(0, (entry, row, colNum) -> {
-			Excel excel = entry.getValue();
-			createCell(row, colNum, excel.name());
-		});
-	}
+    public static CompletableFuture<Void> asyncExport(File file, Class clazz, List dataList) {
+        CompletableFuture<Void> completableFuture = CompletableFuture.supplyAsync(() -> {
+            ExportExcel exportExcel = new ExportExcel(file, clazz, dataList);
+            exportExcel.export();
+            return null;
+        });
+        return completableFuture;
+    }
 
-	private void createContent() {
-		for (int i = 0; i < dataList.size(); i++) {
-			final Object data = dataList.get(i);
+    private void export() {
+        try {
+            createTitle();
+            createContent();
+            saveToFile();
+        } catch (Exception e) {
+            throw new ExcelExportException("excel export error!", e);
+        }
+    }
 
-			createRow(i + 1, (entry, row, colNum) -> {
-				ExcelField field = entry.getKey();
-				String fieldValue = getFieldValue(data, field);
-				createCell(row, colNum, fieldValue);
-			});
-		}
-	}
+    private void createTitle() {
+        createRow(0, (entry, row, colNum) -> {
+            Excel excel = entry.getValue();
+            createCell(row, colNum, excel.name());
+        });
+    }
 
-	private void saveToFile() throws IOException {
+    private void createContent() {
+        for (int i = 0; i < dataList.size(); i++) {
+            final Object data = dataList.get(i);
 
-		File parentFile = file.getParentFile();
-		if (parentFile != null && !parentFile.exists()) {
-			parentFile.mkdirs();
-		}
+            createRow(i + 1, (entry, row, colNum) -> {
+                ExcelField field = entry.getKey();
+                String fieldValue = getFieldValue(data, field);
+                createCell(row, colNum, fieldValue);
+            });
+        }
+    }
 
-		try (FileOutputStream outputStream = new FileOutputStream(file)) {
-			workbook.write(outputStream);
-		} finally {
-			workbook.close();
-		}
-	}
+    private void saveToFile() throws IOException {
 
-	private void createRow(int rowNum, IteratorMap<ExcelField, Excel> iteratorMap) {
-		Row row = sheet.createRow(rowNum);
-		int colNum = 0;
-		Iterator<Map.Entry<ExcelField, Excel>> iterator = map.entrySet().iterator();
-		while (iterator.hasNext()) {
-			iteratorMap.iterator(iterator.next(), row, colNum++);
-		}
-	}
+        File parentFile = file.getParentFile();
+        if (parentFile != null && !parentFile.exists()) {
+            parentFile.mkdirs();
+        }
 
-	private void createCell(Row row, int colNum, String value) {
-		Cell cell = row.createCell(colNum);
-		cell.setCellValue(value);
-	}
+        try (FileOutputStream outputStream = new FileOutputStream(file)) {
+            workbook.write(outputStream);
+        } finally {
+            workbook.close();
+        }
+    }
 
-	private String getFieldValue(Object t, ExcelField excelField) {
-		String convert = convert(excelField.get(t));
+    private void createRow(int rowNum, IteratorMap<ExcelField, Excel> iteratorMap) {
+        Row row = sheet.createRow(rowNum);
+        int colNum = 0;
+        Iterator<Map.Entry<ExcelField, Excel>> iterator = map.entrySet().iterator();
+        while (iterator.hasNext()) {
+            iteratorMap.iterator(iterator.next(), row, colNum++);
+        }
+    }
 
-		return convert == null ? "" : convert;
-	}
+    private void createCell(Row row, int colNum, String value) {
+        Cell cell = row.createCell(colNum);
+        cell.setCellValue(value);
+    }
 
-	private String convert(Object object) {
-		if (object == null) {
-			return null;
-		}
-		Class sourceClass = object.getClass();
-		Class targetClass = String.class;
+    private String getFieldValue(Object t, ExcelField excelField) {
+        String convert = convert(excelField.get(t));
 
-		if (sourceClass == targetClass) {
-			return (String) object;
-		}
+        return convert == null ? "" : convert;
+    }
 
-		if (ConverterService.isSupport(sourceClass, targetClass)) {
-			Optional<String> optional = ConverterService.convert(sourceClass, targetClass, object);
-			return optional.orElse(object.toString());
-		}
-		return object.toString();
-	}
+    private String convert(Object object) {
+        if (object == null) {
+            return null;
+        }
+        Class sourceClass = object.getClass();
+        Class targetClass = String.class;
 
-	interface IteratorMap<K, V> {
-		void iterator(Map.Entry<K, V> entry, Row row, int colNum);
-	}
+        if (sourceClass == targetClass) {
+            return (String) object;
+        }
+        try {
+            return (String) converterService.convert(sourceClass, targetClass, object);
+        } catch (Exception e) {
+            log.warn("类型转换出错！ msg={}", e.getMessage());
+        }
+        return object.toString();
+    }
+
+    interface IteratorMap<K, V> {
+        void iterator(Map.Entry<K, V> entry, Row row, int colNum);
+    }
 
 }

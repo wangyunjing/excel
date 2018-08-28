@@ -1,8 +1,6 @@
 package com.example.convert;
 
 
-import org.apache.commons.lang3.StringUtils;
-
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -16,7 +14,7 @@ public class StringToDateConverter implements Converter<String, Date> {
 
 	@Override
 	public Date convert(String s) {
-		if (StringUtils.isEmpty(s)) {
+		if (s == null) {
 			return null;
 		}
 		SimpleDateFormat sdf = new SimpleDateFormat(format);
