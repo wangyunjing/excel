@@ -79,49 +79,49 @@ public class ImportExcelOptions {
         return predicate;
     }
 
-    public static class ImportExcelOptionsBuilder<T> {
+    public static class Builder<T> {
 
         private ImportExcelOptions options;
 
-        private ImportExcelOptionsBuilder() {
+        private Builder() {
             options = new ImportExcelOptions();
         }
 
-        public static <T> ImportExcelOptionsBuilder<T> create() {
-            return new ImportExcelOptionsBuilder<>();
+        public static <T> Builder<T> create() {
+            return new Builder<>();
         }
 
-        public ImportExcelOptionsBuilder setCellValueTrim(Boolean cellValueTrim) {
+        public Builder setCellValueTrim(Boolean cellValueTrim) {
             options.cellValueTrim = cellValueTrim;
             return this;
         }
 
-        public ImportExcelOptionsBuilder setFilterBlankLine(Boolean filterBlankLine) {
+        public Builder setFilterBlankLine(Boolean filterBlankLine) {
             options.filterBlankLine = filterBlankLine;
             return this;
         }
 
-        public ImportExcelOptionsBuilder setSheetIdx(Integer sheetIdx) {
+        public Builder setSheetIdx(Integer sheetIdx) {
             options.sheetIdx = sheetIdx;
             return this;
         }
 
-        public ImportExcelOptionsBuilder setIs03Excel(Boolean is03Excel) {
+        public Builder setIs03Excel(Boolean is03Excel) {
             options.is03Excel = is03Excel;
             return this;
         }
 
-        public ImportExcelOptionsBuilder setPredicate(Predicate<T> predicate) {
+        public Builder setPredicate(Predicate<T> predicate) {
             options.predicate = predicate;
             return this;
         }
 
-        public ImportExcelOptionsBuilder setConverterService(ConverterService converterService) {
+        public Builder setConverterService(ConverterService converterService) {
             options.converterService = converterService;
             return this;
         }
 
-        public ImportExcelOptionsBuilder addConverter(Class sourceClass, Class targetClass, Converter<?, ?> converter) {
+        public Builder addConverter(Class sourceClass, Class targetClass, Converter<?, ?> converter) {
             if (options.converterService == null) {
                 options.converterService = ConverterService.create();
             }

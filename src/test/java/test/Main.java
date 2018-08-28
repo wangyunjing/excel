@@ -45,7 +45,7 @@ public class Main {
 
 	@Test
 	public void testImportExcel() {
-		ImportExcelOptions options = ImportExcelOptions.ImportExcelOptionsBuilder.<Person>create()
+		ImportExcelOptions options = ImportExcelOptions.Builder.<Person>create()
 				.setPredicate(person -> person.getName().getAge() != null)
 				.build();
 		List<Person> names = ImportExcel.execute(new File("D:\\test\\test.xlsx"), Person.class, options);
