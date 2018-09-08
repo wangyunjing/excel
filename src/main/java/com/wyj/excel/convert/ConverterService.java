@@ -50,6 +50,11 @@ public class ConverterService {
         addConvert(DEFAULT_MAP, double.class, String.class, new DoubleToStringConverter());
         addConvert(DEFAULT_MAP, BigInteger.class, String.class, new BigIntegerToStringConverter());
         addConvert(DEFAULT_MAP, BigDecimal.class, String.class, new BigDecimalToStringConverter());
+
+        addConvert(DEFAULT_MAP, Date.class, Long.class, new DateToLongConverter());
+        addConvert(DEFAULT_MAP, Date.class, long.class, new DateToLongConverter());
+        addConvert(DEFAULT_MAP, Long.class, Date.class, new LongToDateConverter());
+        addConvert(DEFAULT_MAP, long.class, Date.class, new LongToDateConverter());
     }
 
     private Map<ConverterPair, ArrayList<Converter<?, ?>>> map = new HashMap<>();
@@ -110,7 +115,7 @@ public class ConverterService {
         }
         ConverterPair converterPair = new ConverterPair(sourceClass, targetClass);
         ArrayList<Converter<?, ?>> classes = map.get(converterPair);
-        return classes == null ? false : true;
+        return classes == null || classes.size() == 0 ? false : true;
     }
 
     public <T> T convert(Class sourceClass, Class<T> targetClass, Object source) {
@@ -126,17 +131,9 @@ public class ConverterService {
         }
 
         ConverterPair converterPair = new ConverterPair(sourceClass, targetClass);
-
         ArrayList<Converter<?, ?>> converters = map.get(converterPair);
-        Exception exception = null;
-        for (Converter converter : converters) {
-            try {
-                return (T) converter.convert(source);
-            } catch (Exception e) {
-                exception = e;
-            }
-        }
-        throw new RuntimeException("类型转换出错!", exception);
+        Converter converter = converters.get(0);
+        return (T) converter.convert(source);
     }
 
     private static class ConverterPair {

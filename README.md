@@ -23,7 +23,8 @@
 # 类型转换
 ConverterService
 
-通过 `addConvert` 方法可以加入自定义的转换类型 
+通过 `addConvert` 方法可以加入自定义的转换类型, 并放在首位
+在转换过程中，只会使用第一个可用的转换器
 
 如果没有对应的某一类型转换成String, 那么默认使用toString()
 

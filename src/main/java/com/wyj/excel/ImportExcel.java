@@ -119,29 +119,31 @@ public class ImportExcel<T> {
         T instance = null;
         // false:跳过该实例； true:保留该实例
         boolean flag = false;
+        // 列
+        int j = 0;
         try {
             instance = clazz.newInstance();
             int excelFieldCol = -1;
-            List<Pair<Integer, String>> allVlues = new ArrayList<>(list.size());
-            for (int j = 0; j < row.getLastCellNum(); j++) {
+            Map<Integer, Integer> colMap = new HashMap<>(list.size());
+            List<Pair<Integer, String>> allValues = new ArrayList<>(list.size());
+            for (j = 0; j < row.getLastCellNum(); j++) {
                 // 防止下标越界以及提前跳出循环
                 if (excelFieldCol >= list.size() - 1) {
                     break;
                 }
-
                 // 判断是否@Excel#name和title是否相同
                 String titleName = titleList.get(j);
                 titleName = titleName == null ? "" : titleName;
                 String excelName = list.get(excelFieldCol + 1).getAnnotation(Excel.class).name();
                 if ("".equals(excelName) || excelName.equals(titleName)) {
                     excelFieldCol++;
+                    colMap.put(excelFieldCol, j);
                 } else {
                     continue;
                 }
-
                 // 得到表格的值
                 String fieldValue = this.cellValueToString(row.getCell(j));
-                allVlues.add(Pair.of(excelFieldCol, fieldValue));
+                allValues.add(Pair.of(excelFieldCol, fieldValue));
                 // 过滤空行
                 flag = !options.getFilterBlankLine();
                 if (options.getFilterBlankLine() && !StringUtils.isEmpty(fieldValue)) {
@@ -149,14 +151,15 @@ public class ImportExcel<T> {
                 }
             }
             if (flag == true) {
-                for (Pair<Integer, String> pair : allVlues) {
+                for (Pair<Integer, String> pair : allValues) {
+                    j = colMap.get(pair.getLeft());
                     list.get(pair.getLeft()).set(instance, pair.getValue());
                 }
             }
             // 判断是否需要过滤该实例
             flag = flag == true ? options.getPredicate().test(instance) : false;
         } catch (Exception e) {
-            throw new ExcelImportException("导入数据出错!", e);
+            throw new ExcelImportException("导入Excel第" + (row.getRowNum() + 1) + "行" + (j + 1) + "列数据时发生异常!", e);
         }
         return flag ? new DataWrapper<>(instance, false) : new DataWrapper<>(instance, true);
     }
