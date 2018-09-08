@@ -107,6 +107,11 @@ public class ImportExcelOptions {
             return this;
         }
 
+        public Builder setTitleRow(Integer titleRow) {
+            options.titleRow = titleRow;
+            return this;
+        }
+
         public Builder setIs03Excel(Boolean is03Excel) {
             options.is03Excel = is03Excel;
             return this;
