@@ -101,6 +101,14 @@ public class ExportExcel {
             saveToFile();
         } catch (Exception e) {
             throw new ExcelExportException("excel export error!", e);
+        } finally {
+            if (workbook != null) {
+                try {
+                    workbook.close();
+                } catch (IOException e) {
+                    // no thing
+                }
+            }
         }
     }
 
@@ -170,9 +178,9 @@ public class ExportExcel {
         try {
             return (String) converterService.convert(sourceClass, targetClass, object);
         } catch (Exception e) {
-            log.warn("类型转换出错！ msg={}", e.getMessage());
+            log.error("类型转换出错！ msg={}", e.getMessage());
+            throw new RuntimeException(e);
         }
-        return object.toString();
     }
 
     interface IteratorMap<K, V> {

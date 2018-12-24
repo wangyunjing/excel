@@ -76,6 +76,13 @@ public class ImportExcel<T> {
         }
     }
 
+    /**
+     * @param inputStream 调用方决定何时close
+     * @param clazz
+     * @param options
+     * @param <U>
+     * @return
+     */
     public static <U> List<U> execute(InputStream inputStream, Class<U> clazz, ImportExcelOptions options) {
         ImportExcel<U> importExcel = new ImportExcel<>(inputStream, clazz, options);
         return importExcel.parse();
