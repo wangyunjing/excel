@@ -25,9 +25,10 @@ ConverterService
 
 # 导出Excel
 `ExportExcel.execute`
+
 注意：如果没有对应的某一类型转换成String, 那么默认使用toString()
 # 导入Excel
-`ImportExcel.`
+`ImportExcel.execute`
 ## 配置选项 
 `ExcelOptions`
 
