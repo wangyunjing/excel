@@ -1,8 +1,9 @@
 package com.wyj.excel.convert;
 
+import com.wyj.excel.util.Assert;
+
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -12,7 +13,7 @@ import java.util.Map;
  */
 public class ConverterService {
 
-    private static final Map<ConverterPair, ArrayList<Converter<?, ?>>> DEFAULT_MAP = new HashMap<>();
+    private static final Map<ConverterPair, Converter<?, ?>> DEFAULT_MAP = new HashMap<>();
 
     static {
         addConvert(DEFAULT_MAP, String.class, Date.class, new StringToDateConverter());
@@ -57,7 +58,7 @@ public class ConverterService {
         addConvert(DEFAULT_MAP, long.class, Date.class, new LongToDateConverter());
     }
 
-    private Map<ConverterPair, ArrayList<Converter<?, ?>>> map = new HashMap<>();
+    private Map<ConverterPair, Converter<?, ?>> map = new HashMap<>();
 
     private ConverterService() {
         map.putAll(DEFAULT_MAP);
@@ -69,19 +70,12 @@ public class ConverterService {
 
     public static ConverterService create(ConverterService converterService) {
         ConverterService copyConverterService = new ConverterService();
-        copyConverterService.map.clear();
-        for (Map.Entry<ConverterPair, ArrayList<Converter<?, ?>>> entry : converterService.map.entrySet()) {
-            ConverterPair key = entry.getKey();
-            ArrayList<Converter<?, ?>> value = entry.getValue();
-            ArrayList<Converter<?, ?>> copyValue = new ArrayList<>(value.size());
-            copyValue.addAll(value);
-            copyConverterService.map.put(key, copyValue);
-        }
+        converterService.map.putAll(converterService.map);
         return copyConverterService;
     }
 
     /**
-     * 如果存在相同的转换类型,则会把新添加的放入第一个(优先使用);
+     * 如果存在相同的转换类型,则会覆盖之前的
      * 如果不存在,则添加该类型转换
      *
      * @param sourceClass
@@ -92,47 +86,36 @@ public class ConverterService {
         addConvert(map, sourceClass, targetClass, converter);
     }
 
-    private static void addConvert(Map<ConverterPair, ArrayList<Converter<?, ?>>> map,
+    private static void addConvert(Map<ConverterPair, Converter<?, ?>> map,
                                    Class sourceClass, Class targetClass, Converter<?, ?> converter) {
-        if (sourceClass == null || targetClass == null || converter == null) {
-            throw new RuntimeException("不能为空");
-        }
+        Assert.notNull(sourceClass, "sourceClass不能为空");
+        Assert.notNull(targetClass, "targetClass不能为空");
+        Assert.notNull(converter, "converter不能为空");
         ConverterPair converterPair = new ConverterPair(sourceClass, targetClass);
-        ArrayList<Converter<?, ?>> classes = map.get(converterPair);
-        if (classes == null) {
-            classes = new ArrayList<>();
-        }
-        if (classes.contains(converter)) {
-            classes.remove(converter);
-        }
-        classes.add(0, converter);
-        map.put(converterPair, classes);
+        map.put(converterPair, converter);
     }
 
     private boolean isSupport(Class sourceClass, Class targetClass) {
-        if (sourceClass == null || targetClass == null) {
-            return false;
-        }
+        Assert.notNull(sourceClass, "sourceClass不能为空");
+        Assert.notNull(targetClass, "targetClass不能为空");
         ConverterPair converterPair = new ConverterPair(sourceClass, targetClass);
-        ArrayList<Converter<?, ?>> classes = map.get(converterPair);
-        return classes == null || classes.size() == 0 ? false : true;
+        return map.get(converterPair) == null ? false : true;
     }
 
     public <T> T convert(Class sourceClass, Class<T> targetClass, Object source) {
         if (!isSupport(sourceClass, targetClass)) {
             throw new RuntimeException("not support " + sourceClass.getName() + " convert to " + targetClass);
         }
-        if (sourceClass == null || targetClass == null || source == null) {
-            throw new RuntimeException("不能为空");
-        }
+        Assert.notNull(sourceClass, "sourceClass不能为空");
+        Assert.notNull(targetClass, "targetClass不能为空");
+        Assert.notNull(source, "source不能为空");
         if (!sourceClass.isAssignableFrom(source.getClass())) {
             throw new RuntimeException("sourceClass and source 类型不匹配! sourceClass=" +
                     sourceClass.getTypeName() + "\tsource=" + source.getClass().getTypeName());
         }
 
         ConverterPair converterPair = new ConverterPair(sourceClass, targetClass);
-        ArrayList<Converter<?, ?>> converters = map.get(converterPair);
-        Converter converter = converters.get(0);
+        Converter converter = map.get(converterPair);
         return (T) converter.convert(source);
     }
 
