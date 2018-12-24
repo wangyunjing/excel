@@ -8,7 +8,7 @@ public class StringToDoubleConverter implements Converter<String, Double> {
 
 	@Override
 	public Double convert(String s) {
-		if (s == null) {
+		if (s == null || "".equals(s.trim())) {
 			return null;
 		}
 		try {

@@ -8,7 +8,7 @@ public class StringToLongConverter implements Converter<String, Long> {
 
 	@Override
 	public Long convert(String s) {
-		if (s == null) {
+		if (s == null || "".equals(s.trim())) {
 			return null;
 		}
 		try {

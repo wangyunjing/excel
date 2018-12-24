@@ -8,7 +8,7 @@ public class StringToIntegerConverter implements Converter<String, Integer> {
 
 	@Override
 	public Integer convert(String s) {
-		if (s == null) {
+		if (s == null || "".equals(s.trim())) {
 			return null;
 		}
 		try {

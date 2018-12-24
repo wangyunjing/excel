@@ -8,7 +8,7 @@ public class StringToBooleanConverter implements Converter<String, Boolean> {
 
 	@Override
 	public Boolean convert(String s) {
-		if (s == null) {
+		if (s == null || "".equals(s.trim())) {
 			return null;
 		}
 		if ("1".equals(s) || "on".equals(s) || "true".equals(s)) {

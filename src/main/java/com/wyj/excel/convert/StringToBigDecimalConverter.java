@@ -5,7 +5,7 @@ import java.math.BigDecimal;
 public class StringToBigDecimalConverter implements Converter<String, BigDecimal> {
     @Override
     public BigDecimal convert(String s) {
-        if (s == null) {
+        if (s == null || "".equals(s.trim())) {
             return null;
         }
         try {

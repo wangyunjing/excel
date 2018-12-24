@@ -8,7 +8,7 @@ public class StringToShortConverter implements Converter<String, Short> {
 
 	@Override
 	public Short convert(String s) {
-		if (s == null) {
+		if (s == null || "".equals(s.trim())) {
 			return null;
 		}
 		try {
