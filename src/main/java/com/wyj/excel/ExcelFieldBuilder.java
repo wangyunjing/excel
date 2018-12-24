@@ -1,7 +1,7 @@
 package com.wyj.excel;
 
-import com.wyj.excel.convert.ConverterService;
 import com.wyj.excel.annotation.Excel;
+import com.wyj.excel.convert.ConverterService;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -71,7 +71,7 @@ public class ExcelFieldBuilder {
         if (list == null || list.size() == 0) {
             return null;
         }
-        return new ExcelField(excel, converterService == null ? ConverterService.create() : converterService,
+        return new ExcelField(excel, converterService == null ? ConverterService.getDefaultInstance() : converterService,
                 list.toArray(new Field[list.size()]));
     }
 

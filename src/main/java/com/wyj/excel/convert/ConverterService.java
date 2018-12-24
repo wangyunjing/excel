@@ -15,6 +15,10 @@ public class ConverterService {
 
     private static final Map<ConverterPair, Converter<?, ?>> DEFAULT_MAP = new HashMap<>();
 
+    private static class ConverterServiceHolder {
+        public static final ConverterService DEFAULT_CONVERTER_SERVICE = ConverterService.create();
+    }
+
     static {
         addConvert(DEFAULT_MAP, String.class, Date.class, new StringToDateConverter());
         addConvert(DEFAULT_MAP, String.class, Boolean.class, new StringToBooleanConverter());
@@ -74,6 +78,10 @@ public class ConverterService {
         return copyConverterService;
     }
 
+    public static ConverterService getDefaultInstance() {
+        return ConverterServiceHolder.DEFAULT_CONVERTER_SERVICE;
+    }
+
     /**
      * 如果存在相同的转换类型,则会覆盖之前的
      * 如果不存在,则添加该类型转换
@@ -95,7 +103,7 @@ public class ConverterService {
         map.put(converterPair, converter);
     }
 
-    private boolean isSupport(Class sourceClass, Class targetClass) {
+    public boolean isSupport(Class sourceClass, Class targetClass) {
         Assert.notNull(sourceClass, "sourceClass不能为空");
         Assert.notNull(targetClass, "targetClass不能为空");
         ConverterPair converterPair = new ConverterPair(sourceClass, targetClass);
@@ -116,7 +124,7 @@ public class ConverterService {
 
         ConverterPair converterPair = new ConverterPair(sourceClass, targetClass);
         Converter converter = map.get(converterPair);
-        return (T) converter.convert(source);
+        return (T) converter.convert(sourceClass.cast(source));
     }
 
     private static class ConverterPair {

@@ -2,6 +2,7 @@ package com.wyj.excel;
 
 import com.wyj.excel.annotation.Excel;
 import com.wyj.excel.exception.ExcelImportException;
+import com.wyj.excel.util.Assert;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
@@ -19,6 +20,7 @@ import java.io.InputStream;
 import java.math.BigDecimal;
 import java.util.*;
 import java.util.function.Consumer;
+
 
 /**
  * Created by wyj on 17-12-4.
@@ -42,14 +44,15 @@ public class ImportExcel<T> {
     private List<ExcelField> list = new ArrayList<>();
     private List<String> titleList;
 
-    private ImportExcelOptions options;
+    private ExcelOptions options;
 
-    private ImportExcel(InputStream inputStream, Class<T> clazz, ImportExcelOptions options) {
+    private ImportExcel(InputStream inputStream, Class<T> clazz, ExcelOptions options) {
         this.clazz = clazz;
         init(inputStream, options.getIs03Excel(), options);
     }
 
-    private ImportExcel(File file, Class<T> clazz, ImportExcelOptions options) {
+    private ImportExcel(File file, Class<T> clazz, ExcelOptions options) {
+        Assert.notNull(file, "file must not be null");
         this.clazz = clazz;
         try (FileInputStream inputStream = new FileInputStream(file)) {
             Boolean is03Excel = file.getName().matches("^.+\\.(?i)(xls)$");
@@ -61,11 +64,20 @@ public class ImportExcel<T> {
         }
     }
 
-    private void init(InputStream inputStream, Boolean is03Excel, ImportExcelOptions options) {
+    private void init(InputStream inputStream, Boolean is03Excel, ExcelOptions options) {
+        Assert.notNull(inputStream, "inputStream must not be null");
+        Assert.notNull(options, "options must not be null");
         try {
             is03Excel = is03Excel == null ? options.getIs03Excel() : is03Excel;
             this.workbook = is03Excel ? new HSSFWorkbook(inputStream) : new XSSFWorkbook(inputStream);
-            this.sheet = workbook.getSheetAt(options.getSheetIdx());
+            if (options.getSheetName() == null) {
+                this.sheet = workbook.getSheetAt(options.getSheetIdx());
+            } else if (options.getSheetIdx() == null) {
+                this.sheet = workbook.getSheet(options.getSheetName());
+            } else {
+                this.sheet = workbook.getSheetAt(options.getSheetIdx());
+                Assert.isTrue(options.getSheetName().equals(this.sheet.getSheetName()), "sheet don't exist");
+            }
             this.title = sheet.getRow(options.getTitleRow());
 
             this.list = ExcelHelper.getExcelFields(clazz, options.getConverterService());
@@ -83,13 +95,30 @@ public class ImportExcel<T> {
      * @param <U>
      * @return
      */
-    public static <U> List<U> execute(InputStream inputStream, Class<U> clazz, ImportExcelOptions options) {
+    public static <U> List<U> execute(InputStream inputStream, Class<U> clazz, ExcelOptions options) {
         ImportExcel<U> importExcel = new ImportExcel<>(inputStream, clazz, options);
         return importExcel.parse();
     }
 
-    public static <U> List<U> execute(File file, Class<U> clazz, ImportExcelOptions options) {
+    public static <U> List<U> execute(InputStream inputStream, Class<U> clazz) {
+        ImportExcel<U> importExcel = new ImportExcel<>(inputStream, clazz, ExcelOptions.getDefaultInstance());
+        return importExcel.parse();
+    }
+
+    /**
+     * @param file    文件类型扩展后缀优先级大于options设置的Excel类型
+     * @param clazz
+     * @param options
+     * @param <U>
+     * @return
+     */
+    public static <U> List<U> execute(File file, Class<U> clazz, ExcelOptions options) {
         ImportExcel<U> importExcel = new ImportExcel<>(file, clazz, options);
+        return importExcel.parse();
+    }
+
+    public static <U> List<U> execute(File file, Class<U> clazz) {
+        ImportExcel<U> importExcel = new ImportExcel<>(file, clazz, ExcelOptions.getDefaultInstance());
         return importExcel.parse();
     }
 
@@ -125,7 +154,7 @@ public class ImportExcel<T> {
 
         T instance = null;
         // false:跳过该实例； true:保留该实例
-        boolean flag = false;
+        boolean keepInstance = false;
         // 列
         int j = 0;
         try {
@@ -152,23 +181,23 @@ public class ImportExcel<T> {
                 String fieldValue = this.cellValueToString(row.getCell(j));
                 allValues.add(Pair.of(excelFieldCol, fieldValue));
                 // 过滤空行
-                flag = !options.getFilterBlankLine();
+                keepInstance = !options.getFilterBlankLine();
                 if (options.getFilterBlankLine() && !StringUtils.isEmpty(fieldValue)) {
-                    flag = true;
+                    keepInstance = true;
                 }
             }
-            if (flag == true) {
+            if (keepInstance == true) {
                 for (Pair<Integer, String> pair : allValues) {
                     j = colMap.get(pair.getLeft());
                     list.get(pair.getLeft()).set(instance, pair.getValue());
                 }
             }
             // 判断是否需要过滤该实例
-            flag = flag == true ? options.getPredicate().test(instance) : false;
+            keepInstance = keepInstance == true ? options.getPredicate().test(instance) : false;
         } catch (Exception e) {
             throw new ExcelImportException("导入Excel第" + (row.getRowNum() + 1) + "行" + (j + 1) + "列数据时发生异常!", e);
         }
-        return flag ? new DataWrapper<>(instance, false) : new DataWrapper<>(instance, true);
+        return keepInstance ? new DataWrapper<>(instance, false) : new DataWrapper<>(instance, true);
     }
 
     private String cellValueToString(Cell cell) {
@@ -197,7 +226,7 @@ public class ImportExcel<T> {
             case BOOLEAN: // Boolean
                 return String.valueOf(cell.getBooleanCellValue());
             default:
-                return null;
+                throw new ExcelImportException("不支持的Excel数据类型！" + cell.getCellTypeEnum());
         }
     }
 

@@ -12,31 +12,24 @@
 - `order` : 表示标题的顺序
 - `emptyToNull` : 默认为true; 如果是空字符串"", 则该属性为null
 
-## `@Nesting` 
-用于表示嵌套 
+## `@Nesting`
+用于表示嵌套
 
 ## 提示
-如果2个注解同时出现，Excel不会起作用
-
-
+如果`@Nesting`和`@Excel`这2个注解同时出现，`@Excel`不生效，`@Nesting`生效
 
 # 类型转换
 ConverterService
 
-通过 `addConvert` 方法可以加入自定义的转换类型, 并放在首位
-在转换过程中，只会使用第一个可用的转换器
-
-如果没有对应的某一类型转换成String, 那么默认使用toString()
+通过 `addConvert` 方法可以加入自定义的转换类型
 
 # 导出Excel
-## 同步
-`ExportExcel.syncExport`
-## 异步
-`ExportExcel.asyncExport`
+`ExportExcel.execute`
+注意：如果没有对应的某一类型转换成String, 那么默认使用toString()
 # 导入Excel
-`ImportExcel.execute`
-## 导入配置选项 
-`ImportExcelOptions`
+`ImportExcel.`
+## 配置选项 
+`ExcelOptions`
 
 # 使用方式
 参考 单元测试

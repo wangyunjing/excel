@@ -5,51 +5,84 @@ import com.wyj.excel.convert.ConverterService;
 
 import java.util.function.Predicate;
 
-public class ImportExcelOptions {
+public class ExcelOptions {
 
     // 默认sheet所在的位置
     private static final Integer DEFAULT_SHEET_IDX = 0;
     // 默认标题所在的行
     private static final Integer DEFAULT_TITLE_ROW = 0;
 
-    private static final Boolean DEFAULT_Is03Excel = false;
+    private static final Boolean DEFAULT_IS_03EXCEL = false;
 
     private static final Predicate DEFAULT_PREDICATE = obj -> true;
 
-    private static final ConverterService DEFAULT_CONVERTER_SERVICE = ConverterService.create();
+    public static final ExcelOptions DEFAULT_OPTIONS = Builder.create().build();
 
-    // 是否对表格内容进行trim
-    private Boolean cellValueTrim;
-
-    // 是否过滤空白行（所有的内容都是null或者空字符串""）
-    private Boolean filterBlankLine;
-
-    // sheet 所在的位置
-    private Integer sheetIdx;
-
-    // 标题所在的行
-    private Integer titleRow;
-
-    // 是否是xsl格式的excel
-    private Boolean is03Excel;
-
-    // 转换器
-    private ConverterService converterService;
-
-    // 过滤器
-    private Predicate predicate;
-
-    private ImportExcelOptions() {
+    private static class ExcelOptionsHolder {
+        public static final ExcelOptions DEFAULT_OPTIONS = Builder.create().build();
     }
 
-    private ImportExcelOptions(ImportExcelOptions options) {
+    /**
+     * 是否对表格内容进行trim
+     */
+    private Boolean cellValueTrim;
+
+    /**
+     * 是否过滤空白行（所有的内容都是null或者空字符串"")
+     * 在{@link ExportExcel}中无效
+     */
+    private Boolean filterBlankLine;
+
+    /**
+     * sheet 所在的位置
+     * 在{@link ExportExcel}中无效
+     */
+    private Integer sheetIdx;
+
+    /**
+     * sheet名称
+     */
+    private String sheetName;
+
+    /**
+     * 标题所在的行
+     */
+    private Integer titleRow;
+
+    /**
+     * 是否是xsl格式的excel
+     */
+    private Boolean is03Excel;
+
+    /**
+     * 转换器
+     */
+    private ConverterService converterService;
+
+    /**
+     * 过滤器
+     */
+    private Predicate predicate;
+
+    private ExcelOptions() {
+    }
+
+    private ExcelOptions(ExcelOptions options) {
         this.cellValueTrim = options.cellValueTrim == null ? Boolean.TRUE : options.cellValueTrim;
         this.filterBlankLine = options.filterBlankLine == null ? Boolean.TRUE : options.filterBlankLine;
-        this.sheetIdx = options.sheetIdx == null ? DEFAULT_SHEET_IDX : options.sheetIdx;
+        this.sheetIdx = options.sheetIdx;
+        this.sheetName = options.sheetName;
+        if (sheetName == null) {
+            this.sheetIdx = sheetIdx == null ? DEFAULT_SHEET_IDX : options.sheetIdx;
+        }
         this.titleRow = options.titleRow == null ? DEFAULT_TITLE_ROW : options.titleRow;
-        this.is03Excel = options.is03Excel == null ? DEFAULT_Is03Excel : options.is03Excel;
-        this.converterService = options.converterService == null ? DEFAULT_CONVERTER_SERVICE : ConverterService.create(options.converterService);
+        this.is03Excel = options.is03Excel == null ? DEFAULT_IS_03EXCEL : options.is03Excel;
+        this.converterService = options.converterService == null ? ConverterService.getDefaultInstance() : ConverterService.create(options.converterService);
         this.predicate = options.predicate == null ? DEFAULT_PREDICATE : options.predicate;
+    }
+
+    public static ExcelOptions getDefaultInstance() {
+        return ExcelOptionsHolder.DEFAULT_OPTIONS;
     }
 
     public Boolean getCellValueTrim() {
@@ -80,12 +113,16 @@ public class ImportExcelOptions {
         return predicate;
     }
 
+    public String getSheetName() {
+        return sheetName;
+    }
+
     public static class Builder<T> {
 
-        private ImportExcelOptions options;
+        private ExcelOptions options;
 
         private Builder() {
-            options = new ImportExcelOptions();
+            options = new ExcelOptions();
         }
 
         public static <T> Builder<T> create() {
@@ -135,8 +172,13 @@ public class ImportExcelOptions {
             return this;
         }
 
-        public ImportExcelOptions build() {
-            return new ImportExcelOptions(options);
+        public Builder setSheetName(String sheetName) {
+            options.sheetName = sheetName;
+            return this;
+        }
+
+        public ExcelOptions build() {
+            return new ExcelOptions(options);
         }
     }
 
