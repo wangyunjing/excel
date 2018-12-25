@@ -9,15 +9,20 @@ import com.wyj.excel.annotation.Nesting;
 public class Person {
 	@Nesting
 	private Name name;
+
 	@Excel(name = "人", order = 100)
 	private String person;
+
+//	@Excel(name = "描述", order = 50)
+	private Introduction introduction;
 
 	public Person() {
 	}
 
-	public Person(Name name, String person) {
+	public Person(Name name, String person, Introduction introduction) {
 		this.name = name;
 		this.person = person;
+		this.introduction = introduction;
 	}
 
 	public Name getName() {
@@ -34,6 +39,14 @@ public class Person {
 
 	public void setPerson(String person) {
 		this.person = person;
+	}
+
+	public Introduction getIntroduction() {
+		return introduction;
+	}
+
+	public void setIntroduction(Introduction introduction) {
+		this.introduction = introduction;
 	}
 
 	@Override

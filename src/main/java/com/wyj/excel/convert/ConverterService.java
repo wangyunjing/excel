@@ -20,46 +20,46 @@ public class ConverterService {
     }
 
     static {
-        addConvert(DEFAULT_MAP, String.class, Date.class, new StringToDateConverter());
-        addConvert(DEFAULT_MAP, String.class, Boolean.class, new StringToBooleanConverter());
-        addConvert(DEFAULT_MAP, String.class, boolean.class, new StringToBooleanConverter());
-        addConvert(DEFAULT_MAP, String.class, Byte.class, new StringToByteConverter());
-        addConvert(DEFAULT_MAP, String.class, byte.class, new StringToByteConverter());
-        addConvert(DEFAULT_MAP, String.class, Short.class, new StringToShortConverter());
-        addConvert(DEFAULT_MAP, String.class, short.class, new StringToShortConverter());
-        addConvert(DEFAULT_MAP, String.class, Integer.class, new StringToIntegerConverter());
-        addConvert(DEFAULT_MAP, String.class, int.class, new StringToIntegerConverter());
-        addConvert(DEFAULT_MAP, String.class, Long.class, new StringToLongConverter());
-        addConvert(DEFAULT_MAP, String.class, long.class, new StringToLongConverter());
-        addConvert(DEFAULT_MAP, String.class, Float.class, new StringToFloatConverter());
-        addConvert(DEFAULT_MAP, String.class, float.class, new StringToFloatConverter());
-        addConvert(DEFAULT_MAP, String.class, Double.class, new StringToDoubleConverter());
-        addConvert(DEFAULT_MAP, String.class, double.class, new StringToDoubleConverter());
-        addConvert(DEFAULT_MAP, String.class, BigInteger.class, new StringToBigIntegerConverter());
-        addConvert(DEFAULT_MAP, String.class, BigDecimal.class, new StringToBigDecimalConverter());
+        addConverter(DEFAULT_MAP, String.class, Date.class, new StringToDateConverter());
+        addConverter(DEFAULT_MAP, String.class, Boolean.class, new StringToBooleanConverter());
+        addConverter(DEFAULT_MAP, String.class, boolean.class, new StringToBooleanConverter());
+        addConverter(DEFAULT_MAP, String.class, Byte.class, new StringToByteConverter());
+        addConverter(DEFAULT_MAP, String.class, byte.class, new StringToByteConverter());
+        addConverter(DEFAULT_MAP, String.class, Short.class, new StringToShortConverter());
+        addConverter(DEFAULT_MAP, String.class, short.class, new StringToShortConverter());
+        addConverter(DEFAULT_MAP, String.class, Integer.class, new StringToIntegerConverter());
+        addConverter(DEFAULT_MAP, String.class, int.class, new StringToIntegerConverter());
+        addConverter(DEFAULT_MAP, String.class, Long.class, new StringToLongConverter());
+        addConverter(DEFAULT_MAP, String.class, long.class, new StringToLongConverter());
+        addConverter(DEFAULT_MAP, String.class, Float.class, new StringToFloatConverter());
+        addConverter(DEFAULT_MAP, String.class, float.class, new StringToFloatConverter());
+        addConverter(DEFAULT_MAP, String.class, Double.class, new StringToDoubleConverter());
+        addConverter(DEFAULT_MAP, String.class, double.class, new StringToDoubleConverter());
+        addConverter(DEFAULT_MAP, String.class, BigInteger.class, new StringToBigIntegerConverter());
+        addConverter(DEFAULT_MAP, String.class, BigDecimal.class, new StringToBigDecimalConverter());
 
-        addConvert(DEFAULT_MAP, Date.class, String.class, new DateToStringConverter());
-        addConvert(DEFAULT_MAP, Boolean.class, String.class, new BooleanToStringConverter());
-        addConvert(DEFAULT_MAP, boolean.class, String.class, new BooleanToStringConverter());
-        addConvert(DEFAULT_MAP, Byte.class, String.class, new ByteToStringConverter());
-        addConvert(DEFAULT_MAP, byte.class, String.class, new ByteToStringConverter());
-        addConvert(DEFAULT_MAP, Short.class, String.class, new ShortToStringConverter());
-        addConvert(DEFAULT_MAP, short.class, String.class, new ShortToStringConverter());
-        addConvert(DEFAULT_MAP, Integer.class, String.class, new IntegerToStringConverter());
-        addConvert(DEFAULT_MAP, int.class, String.class, new IntegerToStringConverter());
-        addConvert(DEFAULT_MAP, Long.class, String.class, new LongToStringConverter());
-        addConvert(DEFAULT_MAP, long.class, String.class, new LongToStringConverter());
-        addConvert(DEFAULT_MAP, Float.class, String.class, new FloatToStringConverter());
-        addConvert(DEFAULT_MAP, float.class, String.class, new FloatToStringConverter());
-        addConvert(DEFAULT_MAP, Double.class, String.class, new DoubleToStringConverter());
-        addConvert(DEFAULT_MAP, double.class, String.class, new DoubleToStringConverter());
-        addConvert(DEFAULT_MAP, BigInteger.class, String.class, new BigIntegerToStringConverter());
-        addConvert(DEFAULT_MAP, BigDecimal.class, String.class, new BigDecimalToStringConverter());
+        addConverter(DEFAULT_MAP, Date.class, String.class, new DateToStringConverter());
+        addConverter(DEFAULT_MAP, Boolean.class, String.class, new BooleanToStringConverter());
+        addConverter(DEFAULT_MAP, boolean.class, String.class, new BooleanToStringConverter());
+        addConverter(DEFAULT_MAP, Byte.class, String.class, new ByteToStringConverter());
+        addConverter(DEFAULT_MAP, byte.class, String.class, new ByteToStringConverter());
+        addConverter(DEFAULT_MAP, Short.class, String.class, new ShortToStringConverter());
+        addConverter(DEFAULT_MAP, short.class, String.class, new ShortToStringConverter());
+        addConverter(DEFAULT_MAP, Integer.class, String.class, new IntegerToStringConverter());
+        addConverter(DEFAULT_MAP, int.class, String.class, new IntegerToStringConverter());
+        addConverter(DEFAULT_MAP, Long.class, String.class, new LongToStringConverter());
+        addConverter(DEFAULT_MAP, long.class, String.class, new LongToStringConverter());
+        addConverter(DEFAULT_MAP, Float.class, String.class, new FloatToStringConverter());
+        addConverter(DEFAULT_MAP, float.class, String.class, new FloatToStringConverter());
+        addConverter(DEFAULT_MAP, Double.class, String.class, new DoubleToStringConverter());
+        addConverter(DEFAULT_MAP, double.class, String.class, new DoubleToStringConverter());
+        addConverter(DEFAULT_MAP, BigInteger.class, String.class, new BigIntegerToStringConverter());
+        addConverter(DEFAULT_MAP, BigDecimal.class, String.class, new BigDecimalToStringConverter());
 
-        addConvert(DEFAULT_MAP, Date.class, Long.class, new DateToLongConverter());
-        addConvert(DEFAULT_MAP, Date.class, long.class, new DateToLongConverter());
-        addConvert(DEFAULT_MAP, Long.class, Date.class, new LongToDateConverter());
-        addConvert(DEFAULT_MAP, long.class, Date.class, new LongToDateConverter());
+        addConverter(DEFAULT_MAP, Date.class, Long.class, new DateToLongConverter());
+        addConverter(DEFAULT_MAP, Date.class, long.class, new DateToLongConverter());
+        addConverter(DEFAULT_MAP, Long.class, Date.class, new LongToDateConverter());
+        addConverter(DEFAULT_MAP, long.class, Date.class, new LongToDateConverter());
     }
 
     private Map<ConverterPair, Converter<?, ?>> map = new HashMap<>();
@@ -90,12 +90,12 @@ public class ConverterService {
      * @param targetClass
      * @param converter
      */
-    public void addConvert(Class sourceClass, Class targetClass, Converter<?, ?> converter) {
-        addConvert(map, sourceClass, targetClass, converter);
+    public void addConverter(Class sourceClass, Class targetClass, Converter<?, ?> converter) {
+        addConverter(map, sourceClass, targetClass, converter);
     }
 
-    private static void addConvert(Map<ConverterPair, Converter<?, ?>> map,
-                                   Class sourceClass, Class targetClass, Converter<?, ?> converter) {
+    private static void addConverter(Map<ConverterPair, Converter<?, ?>> map,
+                                     Class sourceClass, Class targetClass, Converter<?, ?> converter) {
         Assert.notNull(sourceClass, "sourceClass不能为空");
         Assert.notNull(targetClass, "targetClass不能为空");
         Assert.notNull(converter, "converter不能为空");
@@ -108,6 +108,15 @@ public class ConverterService {
         Assert.notNull(targetClass, "targetClass不能为空");
         ConverterPair converterPair = new ConverterPair(sourceClass, targetClass);
         return map.get(converterPair) == null ? false : true;
+    }
+
+    public Converter<?, ?> getConverter(Class sourceClass, Class targetClass) {
+        Assert.notNull(sourceClass, "sourceClass不能为空");
+        Assert.notNull(targetClass, "targetClass不能为空");
+        Assert.notNull(sourceClass, "sourceClass不能为空");
+        Assert.notNull(targetClass, "targetClass不能为空");
+        ConverterPair converterPair = new ConverterPair(sourceClass, targetClass);
+        return map.get(converterPair);
     }
 
     public <T> T convert(Class sourceClass, Class<T> targetClass, Object source) {

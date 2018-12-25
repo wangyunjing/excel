@@ -21,4 +21,10 @@ public @interface Excel {
 
 	// 如果是空字符串"", 则该属性为null
 	boolean emptyToNull() default true;
+
+	/**
+	 * 时间格式化
+	 * @return
+	 */
+	String dateFormat() default "";
 }

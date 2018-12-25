@@ -166,7 +166,7 @@ public class ExcelOptions {
             if (options.converterService == null) {
                 options.converterService = ConverterService.create();
             }
-            options.converterService.addConvert(sourceClass, targetClass, converter);
+            options.converterService.addConverter(sourceClass, targetClass, converter);
             return this;
         }
 

@@ -1,7 +1,9 @@
 package com.wyj.excel;
 
 import com.wyj.excel.annotation.Excel;
+import com.wyj.excel.convert.Converter;
 import com.wyj.excel.convert.ConverterService;
+import com.wyj.excel.convert.DateFormattingHandler;
 import com.wyj.excel.util.ReflexUtils;
 
 import java.lang.annotation.Annotation;
@@ -82,11 +84,16 @@ public class ExcelField {
         if (object == null || targetClass.isAssignableFrom(object.getClass())) {
             return (T) object;
         }
+        Class sourceClass = object.getClass();
+        Object result = dateHandler(sourceClass, targetClass, object);
+        if (result != null) {
+            return (T) result;
+        }
         if (converterService.isSupport(object.getClass(), targetClass)) {
             return converterService.convert(object.getClass(), targetClass, object);
         }
         if (targetClass == String.class) {
-            return (T) targetClass.toString();
+            return (T) object.toString();
         }
         throw new RuntimeException("没有对应的转换器, sourceClass=" + object.getClass().getName() + ", targetClass=" + targetClass.getName());
     }
@@ -126,8 +133,28 @@ public class ExcelField {
             ReflexUtils.setFieldValue(instance.getClass(), instance, field.getName(), targetClass.cast(value));
             return;
         }
-        Object convert = converterService.convert(sourceClass, targetClass, value);
+        Object convert = dateHandler(sourceClass, targetClass, value);
+
+        if (convert == null) {
+            convert = converterService.convert(sourceClass, targetClass, value);
+        }
         ReflexUtils.setFieldValue(instance.getClass(), instance, field.getName(), convert);
+    }
+
+    // 时间格式化处理
+    private Object dateHandler(Class sourceClass, Class targetClass, Object source) {
+        if (!sourceClass.isAssignableFrom(source.getClass())) {
+            return null;
+        }
+        Object result = null;
+        Converter<?, ?> converter = converterService.getConverter(sourceClass, targetClass);
+        if (converter != null && converter instanceof DateFormattingHandler && !"".equals(excel.dateFormat())) {
+            DateFormattingHandler handler = (DateFormattingHandler) converter;
+            if (handler.isSupport(sourceClass, targetClass)) {
+                result = handler.handle(source, excel.dateFormat());
+            }
+        }
+        return result;
     }
 
     public static class Builder {
