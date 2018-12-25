@@ -42,7 +42,16 @@ public class ReflexUtils {
 		// 获取没有参数的方法
 		Method method = getMethodCache.get(key);
 		if (method == null) {
-			method = ClassUtils.getMethodByName(clazz, methodName);
+			try {
+				method = ClassUtils.getMethodByName(clazz, methodName);
+			} catch (Exception e) {
+				methodName = "is" + fieldName.substring(0, 1).toUpperCase() + fieldName.substring(1);
+				key = clazz.getName() + "#" + methodName;
+				method = getMethodCache.get(key);
+				if (method == null) {
+					method = ClassUtils.getMethodByName(clazz, methodName);
+				}
+			}
 			getMethodCache.put(key, method);
 		}
 		return ReflexUtils.invokeMethod(method, instance);
