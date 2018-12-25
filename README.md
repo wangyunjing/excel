@@ -1,7 +1,7 @@
 # 使用限制
 - 不支持中国式表格(支持简单的表格:一行表示一条数据)
 - 支持xls和xlsx格式的Excel
-- 类的字段必须要存在get和set方法
+- 类的字段必须要存在getXXX/isXXX/setXXX方法
 
 # 字段标注注解
 ## `@Excel` 

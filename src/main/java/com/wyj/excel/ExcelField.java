@@ -6,6 +6,9 @@ import com.wyj.excel.util.ReflexUtils;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * Created by wyj on 17-12-21.
@@ -64,8 +67,6 @@ public class ExcelField {
         }
         return object;
     }
-
-    //
 
     /**
      * 通过get方法获取值
@@ -127,5 +128,70 @@ public class ExcelField {
         }
         Object convert = converterService.convert(sourceClass, targetClass, value);
         ReflexUtils.setFieldValue(instance.getClass(), instance, field.getName(), convert);
+    }
+
+    public static class Builder {
+
+        private Excel excel;
+        private ConverterService converterService;
+        private List<Field> list = new ArrayList<>();
+
+        private Builder() {
+        }
+
+        private Builder(List<Field> list) {
+            this.list.addAll(list);
+        }
+
+        public static Builder newInstance() {
+            return new Builder();
+        }
+
+        public static Builder newInstance(List<Field> list) {
+            return new Builder(list);
+        }
+
+        public static Builder newInstance(Field... fields) {
+            return new Builder(Arrays.asList(fields));
+        }
+
+        public Builder addField(Field field) {
+            list.add(field);
+            return this;
+        }
+
+        public Builder addField(Field... fields) {
+            if (fields == null || fields.length == 0) {
+                return this;
+            }
+            list.addAll(Arrays.asList(fields));
+            return this;
+        }
+
+        public Builder addField(List<Field> list) {
+            if (list == null || list.size() == 0) {
+                return this;
+            }
+            list.addAll(list);
+            return this;
+        }
+
+        public Builder setConverterService(ConverterService converterService) {
+            this.converterService = converterService;
+            return this;
+        }
+
+        public Builder setExcel(Excel excel) {
+            this.excel = excel;
+            return this;
+        }
+
+        public ExcelField build() {
+            if (list == null || list.size() == 0) {
+                return null;
+            }
+            return new ExcelField(excel, converterService == null ? ConverterService.getDefaultInstance() : converterService,
+                    list.toArray(new Field[list.size()]));
+        }
     }
 }

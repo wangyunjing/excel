@@ -16,8 +16,6 @@ public class ExcelOptions {
 
     private static final Predicate DEFAULT_PREDICATE = obj -> true;
 
-    public static final ExcelOptions DEFAULT_OPTIONS = Builder.create().build();
-
     private static class ExcelOptionsHolder {
         public static final ExcelOptions DEFAULT_OPTIONS = Builder.create().build();
     }

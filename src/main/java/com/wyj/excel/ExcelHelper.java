@@ -54,7 +54,7 @@ public class ExcelHelper {
 				List<ExcelField> nestingFields = getExcelFields(field.getType(), converterService, false, existClass);
 
 				nestingFields = nestingFields.stream()
-						.map(excelField -> ExcelFieldBuilder.newInstance(field)
+						.map(excelField -> ExcelField.Builder.newInstance(field)
 								.addField(excelField.getRoute())
 								.setConverterService(excelField.getConverterService())
 								.setExcel(excelField.getExcel())
@@ -62,7 +62,7 @@ public class ExcelHelper {
 						.collect(toList());
 				fieldList.addAll(nestingFields);
 			} else if (field.isAnnotationPresent(Excel.class)) {
-				fieldList.add(ExcelFieldBuilder.newInstance(field)
+				fieldList.add(ExcelField.Builder.newInstance(field)
 						.setConverterService(converterService)
 						.setExcel(field.getAnnotation(Excel.class))
 						.build());
