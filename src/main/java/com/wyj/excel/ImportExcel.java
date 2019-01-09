@@ -11,8 +11,6 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -33,8 +31,6 @@ import java.util.function.Consumer;
  * @param <T>
  */
 public class ImportExcel<T> {
-    private static final Logger log = LoggerFactory.getLogger(ImportExcel.class);
-
     private Workbook workbook;
     private Sheet sheet;
     private Row title;
@@ -44,14 +40,14 @@ public class ImportExcel<T> {
     private List<ExcelField> list = new ArrayList<>();
     private List<String> titleList;
 
-    private ExcelOptions options;
+    private ImportExcelOptions options;
 
-    private ImportExcel(InputStream inputStream, Class<T> clazz, ExcelOptions options) {
+    private ImportExcel(InputStream inputStream, Class<T> clazz, ImportExcelOptions options) {
         this.clazz = clazz;
         init(inputStream, options.getIs03Excel(), options);
     }
 
-    private ImportExcel(File file, Class<T> clazz, ExcelOptions options) {
+    private ImportExcel(File file, Class<T> clazz, ImportExcelOptions options) {
         Assert.notNull(file, "file must not be null");
         this.clazz = clazz;
         try (FileInputStream inputStream = new FileInputStream(file)) {
@@ -64,7 +60,7 @@ public class ImportExcel<T> {
         }
     }
 
-    private void init(InputStream inputStream, Boolean is03Excel, ExcelOptions options) {
+    private void init(InputStream inputStream, Boolean is03Excel, ImportExcelOptions options) {
         Assert.notNull(inputStream, "inputStream must not be null");
         Assert.notNull(options, "options must not be null");
         try {
@@ -95,13 +91,13 @@ public class ImportExcel<T> {
      * @param <U>
      * @return
      */
-    public static <U> List<U> execute(InputStream inputStream, Class<U> clazz, ExcelOptions options) {
+    public static <U> List<U> execute(InputStream inputStream, Class<U> clazz, ImportExcelOptions options) {
         ImportExcel<U> importExcel = new ImportExcel<>(inputStream, clazz, options);
         return importExcel.parse();
     }
 
     public static <U> List<U> execute(InputStream inputStream, Class<U> clazz) {
-        ImportExcel<U> importExcel = new ImportExcel<>(inputStream, clazz, ExcelOptions.getDefaultInstance());
+        ImportExcel<U> importExcel = new ImportExcel<>(inputStream, clazz, ImportExcelOptions.getDefaultInstance());
         return importExcel.parse();
     }
 
@@ -112,13 +108,13 @@ public class ImportExcel<T> {
      * @param <U>
      * @return
      */
-    public static <U> List<U> execute(File file, Class<U> clazz, ExcelOptions options) {
+    public static <U> List<U> execute(File file, Class<U> clazz, ImportExcelOptions options) {
         ImportExcel<U> importExcel = new ImportExcel<>(file, clazz, options);
         return importExcel.parse();
     }
 
     public static <U> List<U> execute(File file, Class<U> clazz) {
-        ImportExcel<U> importExcel = new ImportExcel<>(file, clazz, ExcelOptions.getDefaultInstance());
+        ImportExcel<U> importExcel = new ImportExcel<>(file, clazz, ImportExcelOptions.getDefaultInstance());
         return importExcel.parse();
     }
 

@@ -2,40 +2,24 @@ package com.wyj.excel;
 
 import com.wyj.excel.convert.Converter;
 import com.wyj.excel.convert.ConverterService;
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.function.Predicate;
 
-public class ExcelOptions {
+public class ExportExcelOptions {
 
-    // 默认sheet所在的位置
-    private static final Integer DEFAULT_SHEET_IDX = 0;
-    // 默认标题所在的行
-    private static final Integer DEFAULT_TITLE_ROW = 0;
-
-    private static final Boolean DEFAULT_IS_03EXCEL = false;
 
     private static final Predicate DEFAULT_PREDICATE = obj -> true;
 
     private static class ExcelOptionsHolder {
-        public static final ExcelOptions DEFAULT_OPTIONS = Builder.create().build();
+        public static final ExportExcelOptions DEFAULT_OPTIONS = Builder.create().build();
     }
 
     /**
      * 是否对表格内容进行trim
      */
-    private Boolean cellValueTrim;
+    private boolean cellValueTrim = true;
 
-    /**
-     * 是否过滤空白行（所有的内容都是null或者空字符串"")
-     * 在{@link ExportExcel}中无效
-     */
-    private Boolean filterBlankLine;
-
-    /**
-     * sheet 所在的位置
-     * 在{@link ExportExcel}中无效
-     */
-    private Integer sheetIdx;
 
     /**
      * sheet名称
@@ -43,14 +27,29 @@ public class ExcelOptions {
     private String sheetName;
 
     /**
+     * 当preserveNodes=true时，sheetName需要添加后缀防止冲突
+     */
+    private int sheetNameSuffix = 1;
+
+    /**
+     * 是否避免sheet名称冲突
+     */
+    private boolean avoidSheetNameConflict = false;
+
+    /**
+     * 导出Excel时，如果文件存在，是否保留文件之前的内容
+     */
+    private boolean preserveNodes = false;
+
+    /**
      * 标题所在的行
      */
-    private Integer titleRow;
+    private int titleRow = 0;
 
     /**
      * 是否是xsl格式的excel
      */
-    private Boolean is03Excel;
+    private boolean is03Excel = false;
 
     /**
      * 转换器
@@ -62,44 +61,44 @@ public class ExcelOptions {
      */
     private Predicate predicate;
 
-    private ExcelOptions() {
+    private ExportExcelOptions() {
     }
 
-    private ExcelOptions(ExcelOptions options) {
-        this.cellValueTrim = options.cellValueTrim == null ? Boolean.TRUE : options.cellValueTrim;
-        this.filterBlankLine = options.filterBlankLine == null ? Boolean.TRUE : options.filterBlankLine;
-        this.sheetIdx = options.sheetIdx;
+    private ExportExcelOptions(ExportExcelOptions options) {
+        this.cellValueTrim = options.cellValueTrim;
         this.sheetName = options.sheetName;
-        if (sheetName == null) {
-            this.sheetIdx = sheetIdx == null ? DEFAULT_SHEET_IDX : options.sheetIdx;
-        }
-        this.titleRow = options.titleRow == null ? DEFAULT_TITLE_ROW : options.titleRow;
-        this.is03Excel = options.is03Excel == null ? DEFAULT_IS_03EXCEL : options.is03Excel;
+        this.avoidSheetNameConflict = options.avoidSheetNameConflict;
+        this.preserveNodes =  options.preserveNodes;
+        this.titleRow = options.titleRow;
+        this.is03Excel = options.is03Excel;
         this.converterService = options.converterService == null ? ConverterService.getDefaultInstance() : ConverterService.create(options.converterService);
         this.predicate = options.predicate == null ? DEFAULT_PREDICATE : options.predicate;
     }
 
-    public static ExcelOptions getDefaultInstance() {
+    public static ExportExcelOptions getDefaultInstance() {
         return ExcelOptionsHolder.DEFAULT_OPTIONS;
     }
 
-    public Boolean getCellValueTrim() {
+    public boolean isCellValueTrim() {
         return cellValueTrim;
     }
 
-    public Boolean getFilterBlankLine() {
-        return filterBlankLine;
+    public String getSheetName() {
+        if (sheetName == null || !avoidSheetNameConflict) {
+            return sheetName;
+        }
+        return sheetName + sheetNameSuffix++;
     }
 
-    public Integer getSheetIdx() {
-        return sheetIdx;
+    public boolean isPreserveNodes() {
+        return preserveNodes;
     }
 
-    public Integer getTitleRow() {
+    public int getTitleRow() {
         return titleRow;
     }
 
-    public Boolean getIs03Excel() {
+    public boolean isIs03Excel() {
         return is03Excel;
     }
 
@@ -111,43 +110,29 @@ public class ExcelOptions {
         return predicate;
     }
 
-    public String getSheetName() {
-        return sheetName;
-    }
-
     public static class Builder<T> {
 
-        private ExcelOptions options;
+        private ExportExcelOptions options;
 
         private Builder() {
-            options = new ExcelOptions();
+            options = new ExportExcelOptions();
         }
 
         public static <T> Builder<T> create() {
             return new Builder<>();
         }
 
-        public Builder setCellValueTrim(Boolean cellValueTrim) {
+        public Builder setCellValueTrim(boolean cellValueTrim) {
             options.cellValueTrim = cellValueTrim;
             return this;
         }
 
-        public Builder setFilterBlankLine(Boolean filterBlankLine) {
-            options.filterBlankLine = filterBlankLine;
-            return this;
-        }
-
-        public Builder setSheetIdx(Integer sheetIdx) {
-            options.sheetIdx = sheetIdx;
-            return this;
-        }
-
-        public Builder setTitleRow(Integer titleRow) {
+        public Builder setTitleRow(int titleRow) {
             options.titleRow = titleRow;
             return this;
         }
 
-        public Builder setIs03Excel(Boolean is03Excel) {
+        public Builder setIs03Excel(boolean is03Excel) {
             options.is03Excel = is03Excel;
             return this;
         }
@@ -175,9 +160,17 @@ public class ExcelOptions {
             return this;
         }
 
-        public ExcelOptions build() {
-            return new ExcelOptions(options);
+        public Builder setPreserveNodes(boolean preserveNodes) {
+            options.preserveNodes = preserveNodes;
+            return this;
+        }
+
+        public Builder setAvoidSheetNameConflict(boolean avoidSheetNameConflict) {
+            options.avoidSheetNameConflict = avoidSheetNameConflict;
+            return this;
+        }
+        public ExportExcelOptions build() {
+            return new ExportExcelOptions(options);
         }
     }
-
 }

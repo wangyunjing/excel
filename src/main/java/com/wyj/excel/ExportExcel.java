@@ -3,141 +3,248 @@ package com.wyj.excel;
 import com.wyj.excel.annotation.Excel;
 import com.wyj.excel.exception.ExcelExportException;
 import com.wyj.excel.util.Assert;
+import com.wyj.excel.util.ExceptionUtils;
+import com.wyj.excel.util.FileUtils;
+import com.wyj.excel.util.Try;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
+import java.util.function.Consumer;
 
 /**
  * 导出Excel
  * 导出的数据类必须有get方法
  */
-public class ExportExcel {
+public class ExportExcel implements Closeable {
 
-    private static final Logger log = LoggerFactory.getLogger(ExportExcel.class);
+    private static final Consumer<OutputStream> NOT_CLOSE_STREAM = stream -> {
+    };
+    private static final Consumer<OutputStream> CLOSE_STREAM = ExportExcel::closeStream;
 
-    private static final Function<OutputStream, Boolean> NOT_CLOSE_STREAM = stream -> true;
-    private static final Function<OutputStream, Boolean> CLOSE_STREAM = ExportExcel::close;
+
+
 
     private Workbook workbook;
 
     private Sheet sheet;
 
-    // 导出的数据
+    /**
+     * 数据
+     */
     private List dataList;
 
-    // 插入顺序
+    /**
+     * 数据类型
+     */
+    private Class clazz;
+
+    /**
+     * 插入顺序
+     */
     private Map<ExcelField, Excel> map = new LinkedHashMap<>();
 
-    private ExcelOptions options;
+    /**
+     * 选项
+     */
+    private ExportExcelOptions options;
 
+    /**
+     * 输出流
+     */
     private OutputStream outputStream;
+
+    /**
+     * 导出完数据的后处理
+     */
+    private Runnable postProcessing = ()->{};
 
     /**
      * 关闭输出流
      */
-    private Function<OutputStream, Boolean> closeOutputStreamFunction;
+    private Consumer<OutputStream> closeOutputStreamFunction;
 
-    private ExportExcel(File file, Class clazz, List dataList, ExcelOptions options) {
+    private ExportExcel(File file, Class clazz, List dataList, ExportExcelOptions options) {
+        this.clazz = clazz;
+        this.dataList = dataList;
+        this.options = options;
         this.closeOutputStreamFunction = CLOSE_STREAM;
-
-        Boolean is03Excel = file.getName().matches("^.+\\.(?i)(xls)$");
-
-        File parentFile = file.getParentFile();
-        if (parentFile != null && !parentFile.exists()) {
-            parentFile.mkdirs();
+        if (clazz != null) {
+            initMap();
         }
-
-        FileOutputStream outputStream = null;
+        File outFile = file;
+        FileUtils.createParentFile(file);
+        FileInputStream fileInputStream = null;
         try {
-            outputStream = new FileOutputStream(file);
-            init(outputStream, is03Excel, clazz, dataList, options);
+            Boolean is03Excel = file.getName().matches("^.+\\.(?i)(xls)$");
+            is03Excel = is03Excel == null ? options.isIs03Excel() : is03Excel;
+            if (file.exists() && options.isPreserveNodes()) {
+                File tmpFile = FileUtils.createTmpFile(is03Excel ? "xls" : "xlsx");
+                FileUtils.copyFile(file, tmpFile);
+                outFile = tmpFile;
+                postProcessing = () -> {
+                    FileUtils.copyFile(tmpFile, file);
+                    ExceptionUtils.engulf(() -> FileUtils.deleteFile(tmpFile));
+                };
+                fileInputStream = new FileInputStream(tmpFile);
+                this.workbook = is03Excel ? new HSSFWorkbook(fileInputStream) : new XSSFWorkbook(fileInputStream);
+            } else {
+                this.workbook = is03Excel ? new HSSFWorkbook() : new XSSFWorkbook();
+            }
+            this.outputStream = new FileOutputStream(outFile);
         } catch (Exception e) {
-            close(outputStream);
-            close(this.workbook);
+            closeStream(fileInputStream);
+            closeStream(outputStream);
+            closeStream(this.workbook);
             throw new ExcelExportException(e);
         }
     }
 
-    private ExportExcel(OutputStream outputStream, Class clazz, List dataList, ExcelOptions options) {
-        this.closeOutputStreamFunction = NOT_CLOSE_STREAM;
-        init(outputStream, null, clazz, dataList, options);
+    private ExportExcel(OutputStream outputStream, Class clazz, List dataList, ExportExcelOptions options) {
+        try {
+            this.clazz = clazz;
+            this.dataList = dataList;
+            this.options = options;
+            this.closeOutputStreamFunction = NOT_CLOSE_STREAM;
+            this.workbook = options.isIs03Excel() ? new HSSFWorkbook() : new XSSFWorkbook();
+            this.outputStream = outputStream;
+        } catch (Exception e) {
+            closeStream(this.workbook);
+            throw new ExcelExportException(e);
+        }
     }
 
-    private void init(OutputStream outputStream, Boolean is03Excel, Class clazz, List dataList, ExcelOptions options) {
-        Assert.notNull(outputStream, "outputStream must not be null");
+    private void init(Class clazz, List dataList, ExportExcelOptions options) {
         Assert.notNull(clazz, "clazz must not be null");
         Assert.notNull(dataList, "dataList must not be null");
         Assert.notNull(options, "options must not be null");
 
-        this.outputStream = outputStream;
         this.dataList = dataList;
         this.options = options;
-        is03Excel = is03Excel == null ? options.getIs03Excel() : is03Excel;
+        if (this.clazz == null || this.clazz != clazz) {
+            this.clazz = clazz;
+            map.clear();
+            initMap();
+        }
+    }
 
+    private void initMap() {
         List<ExcelField> fieldList = ExcelHelper.getExcelFields(clazz, options.getConverterService());
         for (ExcelField field : fieldList) {
             Excel excel = field.getAnnotation(Excel.class);
             map.put(field, excel);
         }
-
-        this.workbook = is03Excel ? new HSSFWorkbook() : new XSSFWorkbook();
-        if (options.getSheetName() == null) {
-            this.sheet = workbook.createSheet();
-        } else {
-            this.sheet = workbook.createSheet(options.getSheetName());
-        }
     }
 
-    public static void execute(File file, Class clazz, List dataList, ExcelOptions options) {
+    public static void execute(File file, Class clazz, List dataList, ExportExcelOptions options) {
         ExportExcel exportExcel = new ExportExcel(file, clazz, dataList, options);
         exportExcel.export();
     }
 
     public static void execute(File file, Class clazz, List dataList) {
-        ExportExcel exportExcel = new ExportExcel(file, clazz, dataList, ExcelOptions.getDefaultInstance());
+        ExportExcel exportExcel = new ExportExcel(file, clazz, dataList, ExportExcelOptions.getDefaultInstance());
         exportExcel.export();
     }
 
     /**
      * @param outputStream 调用方决定何时关闭
-     * @param clazz
-     * @param dataList
-     * @param options
      */
-    public static void execute(OutputStream outputStream, Class clazz, List dataList, ExcelOptions options) {
+    public static void execute(OutputStream outputStream, Class clazz, List dataList, ExportExcelOptions options) {
         ExportExcel exportExcel = new ExportExcel(outputStream, clazz, dataList, options);
         exportExcel.export();
     }
 
+    /**
+     * @param outputStream 调用方决定何时关闭
+     */
     public static void execute(OutputStream outputStream, Class clazz, List dataList) {
-        ExportExcel exportExcel = new ExportExcel(outputStream, clazz, dataList, ExcelOptions.getDefaultInstance());
+        ExportExcel exportExcel = new ExportExcel(outputStream, clazz, dataList, ExportExcelOptions.getDefaultInstance());
         exportExcel.export();
+    }
+
+    public static ExportExcel build(File file) {
+        ExportExcel exportExcel = new ExportExcel(file, null, null, ExportExcelOptions.getDefaultInstance());
+        return exportExcel;
+    }
+
+    public static ExportExcel build(File file, ExportExcelOptions options) {
+        ExportExcel exportExcel = new ExportExcel(file, null, null, options);
+        return exportExcel;
+    }
+
+    /**
+     * @param outputStream 调用方决定何时关闭
+     */
+    public static ExportExcel build(OutputStream outputStream) {
+        ExportExcel exportExcel = new ExportExcel(outputStream, null, null, ExportExcelOptions.getDefaultInstance());
+        return exportExcel;
+    }
+
+    /**
+     * @param outputStream 调用方决定何时关闭
+     */
+    public static ExportExcel build(OutputStream outputStream, ExportExcelOptions options) {
+        ExportExcel exportExcel = new ExportExcel(outputStream, null, null, options);
+        return exportExcel;
     }
 
     private void export() {
         try {
-            createTitle();
-            createContent();
-            workbook.write(outputStream);
+            nextSheet(clazz, dataList);
+            finish();
         } catch (Exception e) {
             throw new ExcelExportException("excel export error!", e);
         } finally {
-            close(workbook);
-            closeOutputStreamFunction.apply(outputStream);
+            ExceptionUtils.engulf(Try.of(this::close));
         }
     }
+
+    public void nextSheet(Class clazz, List dataList) throws Exception {
+        nextSheet(clazz, dataList, options);
+    }
+
+    public void nextSheet(Class clazz, List dataList, ExportExcelOptions options) throws Exception {
+        init(clazz, dataList, options);
+        String sheetName = getSheetName();
+        if (sheetName == null) {
+            this.sheet = workbook.createSheet();
+        } else {
+            this.sheet = workbook.createSheet(sheetName);
+        }
+        createTitle();
+        createContent();
+    }
+
+    private String getSheetName() {
+        String sheetName = null;
+        do {
+            sheetName = options.getSheetName();
+            if (sheetName == null) {
+                return null;
+            }
+        } while (workbook.getSheet(sheetName) != null);
+        return sheetName;
+    }
+
+    public void finish() throws IOException {
+        workbook.write(outputStream);
+        postProcessing.run();
+    }
+
+    @Override
+    public void close() throws IOException {
+        closeStream(workbook);
+        closeOutputStreamFunction.accept(outputStream);
+    }
+
 
     private void createTitle() {
         createRow(options.getTitleRow(), (entry, row, colNum) -> {
@@ -173,7 +280,7 @@ public class ExportExcel {
         if (value == null) {
             return;
         }
-        if (options.getCellValueTrim()) {
+        if (options.isCellValueTrim()) {
             value = value.trim();
         }
         Cell cell = row.createCell(colNum);
@@ -184,15 +291,13 @@ public class ExportExcel {
         void iterator(Map.Entry<K, V> entry, Row row, int colNum);
     }
 
-    private static boolean close(Closeable closeable) {
+    private static void closeStream(Closeable closeable) {
         if (closeable != null) {
             try {
                 closeable.close();
             } catch (IOException e) {
-                log.debug("关闭流报错！", e);
-                return false;
+                //
             }
         }
-        return true;
     }
 }

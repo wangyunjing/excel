@@ -1,14 +1,13 @@
 package test;
 
-import com.wyj.excel.ExcelOptions;
 import com.wyj.excel.ExportExcel;
+import com.wyj.excel.ExportExcelOptions;
 import com.wyj.excel.ImportExcel;
+import com.wyj.excel.ImportExcelOptions;
 import org.junit.Test;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -34,7 +33,7 @@ public class Main {
         System.out.println("文件路径:" + file.getAbsolutePath());
 
         testExportExcel();
-        testImportExcel();
+//        testImportExcel();
     }
 
     public void testExportExcel() throws ExecutionException, InterruptedException, FileNotFoundException {
@@ -43,19 +42,43 @@ public class Main {
         personList.add(new Person(new Name("w2", 2, new Date(), false), " person2", new Introduction(2, 2, "Introduction2")));
         personList.add(new Person(new Name("w3 ", 3, new Date(), true), "person3", new Introduction(3, 3, "Introduction3")));
         personList.add(new Person(new Name("w4", 4, new Date(), false), "person4", new Introduction(4, 4, "Introduction4")));
-        try (OutputStream outputStream = new FileOutputStream(file)) {
-            ExcelOptions options0 = ExcelOptions.Builder.<Person>create()
-                    .setTitleRow(2)
-                    .setSheetName("test姓名1")
-                    .build();
-            ExportExcel.execute(outputStream, Person.class, personList, options0);
+
+        List<Name> names = new ArrayList<>();
+        names.add(new Name("name1", 1, new Date(), true));
+        names.add(new Name("name2", 2, new Date(), true));
+        names.add(new Name("name3", 3, new Date(), true));
+        names.add(new Name("name4", 4, new Date(), true));
+
+        /**
+         * 生成多个sheet
+         */
+        ExportExcelOptions options0 = ExportExcelOptions.Builder.<Person>create()
+                .setTitleRow(2)
+                .setSheetName("Test")
+                .setPreserveNodes(true)
+                .setAvoidSheetNameConflict(true)
+                .build();
+        try (ExportExcel exportExcel = ExportExcel.build(file, options0)) {
+            for (int i = 0; i < 10; i++) {
+                if (i % 2 == 0) {
+                    exportExcel.nextSheet(Person.class, personList);
+                } else {
+                    exportExcel.nextSheet(Name.class, names);
+                }
+            }
+            exportExcel.finish();
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+
+        /**
+         * 生成一个sheet
+         */
+        ExportExcel.execute(file, Person.class, personList, options0);
     }
 
     public void testImportExcel() {
-        ExcelOptions options0 = ExcelOptions.Builder.<Person>create()
+        ImportExcelOptions options0 = ImportExcelOptions.Builder.<Person>create()
                 .setTitleRow(2)
                 .setSheetIdx(0)
                 .setSheetName("test姓名1")
