@@ -135,7 +135,7 @@ public class ReflexUtils {
 		Assert.notNull(method);
 		Assert.notNull(target);
 		if (args == null) {
-			args = new Object[0];
+			args = new Object[]{null};
 		}
 		try {
 			return method.invoke(target, args);
@@ -157,7 +157,7 @@ public class ReflexUtils {
 			//判断是否是set方法
 			if (methodName.length() > 3 &&
 					methodName.startsWith("set") &&
-					method.getReturnType().equals(Void.class) &&
+					method.getReturnType().equals(void.class) &&
 					method.getParameterCount() == 1 &&
 					Modifier.isPublic(method.getModifiers())) {
 
