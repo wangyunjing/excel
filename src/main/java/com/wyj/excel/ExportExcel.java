@@ -122,6 +122,9 @@ public class ExportExcel {
             this.clazz = clazz;
             this.dataList = dataList;
             this.options = options;
+            if (clazz != null) {
+                initMap();
+            }
             this.workbook = options.isIs03Excel() ? new HSSFWorkbook() : new XSSFWorkbook();
             this.outputStream = outputStream;
         } catch (Exception e) {
