@@ -6,6 +6,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Created by wyj on 17-10-23.
+ * 参考：org.springframework.util.ReflectionUtils
  */
 public class ReflexUtils {
 
