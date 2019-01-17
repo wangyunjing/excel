@@ -212,10 +212,10 @@ public class ExportExcel {
             nextSheet(clazz, dataList);
             finish();
         } catch (Exception e) {
-            exceptionHandle.run();
+            exceptionHandle();
             throw new ExcelExportException("excel export error!", e);
         } finally {
-            ExceptionUtils.engulf(Try.of(this::afterCompletion));
+            afterCompletion();
         }
     }
 
@@ -258,9 +258,21 @@ public class ExportExcel {
         ExceptionUtils.engulf(exceptionHandle);
     }
 
+    public static void exceptionHandle(ExportExcel exportExcel) {
+        if (exportExcel != null) {
+            exportExcel.exceptionHandle();
+        }
+    }
+
     public void afterCompletion() {
         closeStream(workbook);
         ExceptionUtils.engulf(afterCompletion);
+    }
+
+    public static void afterCompletion(ExportExcel exportExcel) {
+        if (exportExcel != null) {
+            exportExcel.afterCompletion();
+        }
     }
 
     private void createTitle() {

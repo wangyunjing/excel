@@ -58,9 +58,8 @@ public class Main {
                 .setPreserveNodes(true)
                 .setAvoidSheetNameConflict(true)
                 .build();
-        ExportExcel exportExcel = null;
+        ExportExcel exportExcel = ExportExcel.build(file, options0);
         try {
-            exportExcel = ExportExcel.build(file, options0);
             for (int i = 0; i < 10; i++) {
                 if (i % 2 == 0) {
                     exportExcel.nextSheet(Person.class, personList);
@@ -70,14 +69,10 @@ public class Main {
             }
             exportExcel.finish();
         } catch (Exception e) {
-            if (exportExcel != null) {
-                exportExcel.exceptionHandle();
-            }
+            ExportExcel.exceptionHandle(exportExcel);
             throw new RuntimeException(e);
         } finally {
-            if (exportExcel != null) {
-                exportExcel.afterCompletion();
-            }
+            ExportExcel.afterCompletion(exportExcel);
         }
 
         /**
