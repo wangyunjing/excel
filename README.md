@@ -26,12 +26,16 @@ ConverterService
 
 # 导出Excel
 `ExportExcel.execute`
+`ExportExcel.build`
+> 支持在已存在的excel文件上追加sheet，并且在一次导出时，可导出多个sheet
+## 配置选项
+`ExportExcelOptions`
 
 注意：如果没有对应的某一类型转换成String, 那么默认使用toString()
 # 导入Excel
 `ImportExcel.execute`
 ## 配置选项 
-`ExcelOptions`
+`ImportExcelOptions`
 
 # 使用方式
-参考 单元测试
+参考 单元测试`Main` 
