@@ -12,6 +12,8 @@
 - `order` : 表示标题的顺序
 - `emptyToNull` : 默认为true; 如果是空字符串"", 则该属性为null
 - `dateFormat` : 默认为"", 时间格式化
+- `importConverter` : 默认为Converter.class 指定转换器
+- `exportConverter` : 默认为Converter.class 指定转换器
 
 ## `@Nesting`
 用于表示嵌套
