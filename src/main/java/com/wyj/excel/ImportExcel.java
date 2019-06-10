@@ -1,6 +1,5 @@
 package com.wyj.excel;
 
-import com.wyj.excel.annotation.Excel;
 import com.wyj.excel.exception.ExcelImportException;
 import com.wyj.excel.util.Assert;
 import org.apache.commons.lang3.StringUtils;
@@ -166,7 +165,7 @@ public class ImportExcel<T> {
                 // 判断是否@Excel#name和title是否相同
                 String titleName = titleList.get(j);
                 titleName = titleName == null ? "" : titleName;
-                String excelName = list.get(excelFieldCol + 1).getAnnotation(Excel.class).name();
+                String excelName = list.get(excelFieldCol + 1).getExcel().name();
                 if ("".equals(excelName) || excelName.equals(titleName)) {
                     excelFieldCol++;
                     colMap.put(excelFieldCol, j);

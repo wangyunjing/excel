@@ -1,8 +1,8 @@
 package com.wyj.excel;
 
-import com.wyj.excel.convert.ConverterService;
 import com.wyj.excel.annotation.Excel;
 import com.wyj.excel.annotation.Nesting;
+import com.wyj.excel.convert.ConverterService;
 import com.wyj.excel.util.ReflexUtils;
 
 import java.lang.reflect.Field;
@@ -72,8 +72,8 @@ public class ExcelHelper {
 		// 是否排序
 		if (isOrder) {
 			fieldList = fieldList.stream().sorted((f1, f2) -> {
-				Excel excel1 = f1.getAnnotation(Excel.class);
-				Excel excel2 = f2.getAnnotation(Excel.class);
+				Excel excel1 = f1.getExcel();
+				Excel excel2 = f2.getExcel();
 				return excel1.order() - excel2.order();
 			}).collect(toList());
 		}

@@ -5,7 +5,6 @@ import com.wyj.excel.exception.ExcelExportException;
 import com.wyj.excel.util.Assert;
 import com.wyj.excel.util.ExceptionUtils;
 import com.wyj.excel.util.FileUtils;
-import com.wyj.excel.util.Try;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
@@ -150,7 +149,7 @@ public class ExportExcel {
         map.clear();
         List<ExcelField> fieldList = ExcelHelper.getExcelFields(clazz, options.getConverterService());
         for (ExcelField field : fieldList) {
-            Excel excel = field.getAnnotation(Excel.class);
+            Excel excel = field.getExcel();
             map.put(field, excel);
         }
     }
@@ -290,7 +289,7 @@ public class ExportExcel {
             }
             createRow(options.getTitleRow() + i + 1, (entry, row, colNum) -> {
                 ExcelField field = entry.getKey();
-                String fieldValue = field.get(data, String.class);
+                String fieldValue = field.get(data);
                 createCell(row, colNum, fieldValue);
             });
         }
