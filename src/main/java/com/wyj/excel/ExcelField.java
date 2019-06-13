@@ -4,7 +4,7 @@ import com.wyj.excel.annotation.Excel;
 import com.wyj.excel.convert.Converter;
 import com.wyj.excel.convert.ConverterService;
 import com.wyj.excel.convert.DateFormattingHandler;
-import com.wyj.excel.util.ReflexUtils;
+import com.wyj.excel.util.ReflectionUtils;
 
 import java.lang.reflect.Field;
 import java.util.*;
@@ -52,7 +52,7 @@ public class ExcelField {
         }
         // 获取具体的实例
         for (Field field : getRoute()) {
-            instance = ReflexUtils.getFieldValue(instance.getClass(), instance, field.getName());
+            instance = ReflectionUtils.getFieldValue(instance.getClass(), instance, field.getName());
             if (instance == null) {
                 break;
             }
@@ -84,14 +84,14 @@ public class ExcelField {
         // 获取具体的实例和字段
         for (int i = 0; i < route.length - 1; i++) {
             Field field = route[i];
-            Object fieldValue = ReflexUtils.getFieldValue(instance.getClass(), instance, field.getName());
+            Object fieldValue = ReflectionUtils.getFieldValue(instance.getClass(), instance, field.getName());
             if (fieldValue == null) {
                 try {
                     fieldValue = field.getType().newInstance();
                 } catch (Exception e) {
                     throw new RuntimeException("创建" + field.getType() + "实例失败");
                 }
-                ReflexUtils.setFieldValue(instance.getClass(), instance, field.getName(), fieldValue);
+                ReflectionUtils.setFieldValue(instance.getClass(), instance, field.getName(), fieldValue);
             }
             instance = fieldValue;
         }
@@ -109,7 +109,7 @@ public class ExcelField {
         // targetClass所表示的类或接口与String.class所表示的类或接口是否相同，或是否是其超类或超接口。如果是则返回 true；否则返回 false
         result = result == DEFAULT_OBJECT && targetClass.isAssignableFrom(String.class) ? targetClass.cast(value) : result;
         if (result != DEFAULT_OBJECT) {
-            ReflexUtils.setFieldValue(instance.getClass(), instance, field.getName(), result);
+            ReflectionUtils.setFieldValue(instance.getClass(), instance, field.getName(), result);
             return;
         }
         throw new RuntimeException("没有对应的转换器, sourceClass=String.class, targetClass=" + targetClass.getName());

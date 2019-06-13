@@ -3,7 +3,7 @@ package com.wyj.excel;
 import com.wyj.excel.annotation.Excel;
 import com.wyj.excel.annotation.Nesting;
 import com.wyj.excel.convert.ConverterService;
-import com.wyj.excel.util.ReflexUtils;
+import com.wyj.excel.util.ReflectionUtils;
 
 import java.lang.reflect.Field;
 import java.util.*;
@@ -46,7 +46,7 @@ public class ExcelHelper {
 
 		List<ExcelField> fieldList = new ArrayList<>();
 
-		Field[] declaredFields = ReflexUtils.getAllField(clazz);
+		Field[] declaredFields = ReflectionUtils.getAllField(clazz);
 		for (Field field : declaredFields) {
 
 			if (field.isAnnotationPresent(Nesting.class)) {
