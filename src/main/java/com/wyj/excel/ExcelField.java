@@ -54,7 +54,7 @@ public class ExcelField {
         for (Field field : getRoute()) {
             instance = ReflectionUtils.getFieldValue(instance.getClass(), instance, field.getName());
             if (instance == null) {
-                break;
+                return null;
             }
         }
         Class sourceClass = instance.getClass();
