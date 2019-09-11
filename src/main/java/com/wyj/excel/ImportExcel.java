@@ -220,6 +220,8 @@ public class ImportExcel<T> {
                 return cellValue;
             case BOOLEAN: // Boolean
                 return String.valueOf(cell.getBooleanCellValue());
+            case BLANK:
+                return null;
             default:
                 throw new ExcelImportException("不支持的Excel数据类型！" + cell.getCellTypeEnum());
         }
