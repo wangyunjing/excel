@@ -150,7 +150,7 @@ public class ImportExcel<T> {
 
         T instance = null;
         // false:跳过该实例； true:保留该实例
-        boolean keepInstance = false;
+        boolean keepInstance = !options.getFilterBlankLine();
         // 列
         int j = 0;
         try {
@@ -177,8 +177,7 @@ public class ImportExcel<T> {
                 String fieldValue = this.cellValueToString(row.getCell(j));
                 allValues.add(Pair.of(excelFieldCol, fieldValue));
                 // 过滤空行
-                keepInstance = !options.getFilterBlankLine();
-                if (options.getFilterBlankLine() && !StringUtils.isEmpty(fieldValue)) {
+                if (!StringUtils.isEmpty(fieldValue)) {
                     keepInstance = true;
                 }
             }
