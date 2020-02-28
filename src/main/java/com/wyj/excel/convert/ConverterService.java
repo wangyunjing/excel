@@ -120,9 +120,6 @@ public class ConverterService {
     }
 
     public <T> T convert(Class sourceClass, Class<T> targetClass, Object source) {
-        if (!isSupport(sourceClass, targetClass)) {
-            throw new RuntimeException("not support " + sourceClass.getName() + " convert to " + targetClass);
-        }
         Assert.notNull(sourceClass, "sourceClass不能为空");
         Assert.notNull(targetClass, "targetClass不能为空");
         Assert.notNull(source, "source不能为空");
@@ -130,9 +127,11 @@ public class ConverterService {
             throw new RuntimeException("sourceClass and source 类型不匹配! sourceClass=" +
                     sourceClass.getTypeName() + "\tsource=" + source.getClass().getTypeName());
         }
-
         ConverterPair converterPair = new ConverterPair(sourceClass, targetClass);
         Converter converter = map.get(converterPair);
+        if (converter == null) {
+            throw new RuntimeException("not support " + sourceClass.getName() + " convert to " + targetClass);
+        }
         return (T) converter.convert(sourceClass.cast(source));
     }
 

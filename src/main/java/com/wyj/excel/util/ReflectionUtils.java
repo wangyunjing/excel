@@ -6,8 +6,9 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Created by wyj on 17-10-23.
+ * 参考：org.springframework.util.ReflectionUtils
  */
-public class ReflexUtils {
+public class ReflectionUtils {
 
 	private static final String CGLIB_RENAMED_METHOD_PREFIX = "CGLIB$";
 
@@ -54,7 +55,7 @@ public class ReflexUtils {
 			}
 			getMethodCache.put(key, method);
 		}
-		return ReflexUtils.invokeMethod(method, instance);
+		return ReflectionUtils.invokeMethod(method, instance);
 	}
 
 	// 通过set方法设置字段值
@@ -67,7 +68,7 @@ public class ReflexUtils {
 			method = ClassUtils.getMethodByName(clazz, methodName, null);
 			setMethodCache.put(key, method);
 		}
-		return ReflexUtils.invokeMethod(method, instance, value);
+		return ReflectionUtils.invokeMethod(method, instance, value);
 	}
 
 	public static Field[] getAllField(Class<?> clazz) {
@@ -135,7 +136,7 @@ public class ReflexUtils {
 		Assert.notNull(method);
 		Assert.notNull(target);
 		if (args == null) {
-			args = new Object[0];
+			args = new Object[]{null};
 		}
 		try {
 			return method.invoke(target, args);
@@ -157,7 +158,7 @@ public class ReflexUtils {
 			//判断是否是set方法
 			if (methodName.length() > 3 &&
 					methodName.startsWith("set") &&
-					method.getReturnType().equals(Void.class) &&
+					method.getReturnType().equals(void.class) &&
 					method.getParameterCount() == 1 &&
 					Modifier.isPublic(method.getModifiers())) {
 

@@ -12,6 +12,8 @@
 - `order` : 表示标题的顺序
 - `emptyToNull` : 默认为true; 如果是空字符串"", 则该属性为null
 - `dateFormat` : 默认为"", 时间格式化
+- `importConverter` : 默认为Converter.class 指定转换器
+- `exportConverter` : 默认为Converter.class 指定转换器
 
 ## `@Nesting`
 用于表示嵌套
@@ -26,12 +28,16 @@ ConverterService
 
 # 导出Excel
 `ExportExcel.execute`
+`ExportExcel.build`
+> 支持在已存在的excel文件上追加sheet，并且在一次导出时，可导出多个sheet
+## 配置选项
+`ExportExcelOptions`
 
 注意：如果没有对应的某一类型转换成String, 那么默认使用toString()
 # 导入Excel
 `ImportExcel.execute`
 ## 配置选项 
-`ExcelOptions`
+`ImportExcelOptions`
 
 # 使用方式
-参考 单元测试
+参考 单元测试`Main` 

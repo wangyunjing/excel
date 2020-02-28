@@ -5,7 +5,6 @@ import com.wyj.excel.exception.ExcelExportException;
 import com.wyj.excel.util.Assert;
 import com.wyj.excel.util.ExceptionUtils;
 import com.wyj.excel.util.FileUtils;
-import com.wyj.excel.util.Try;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
@@ -14,25 +13,13 @@ import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import java.io.*;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.function.Consumer;
+import java.util.*;
 
 /**
  * 导出Excel
  * 导出的数据类必须有get方法
  */
-public class ExportExcel implements Closeable {
-
-    private static final Consumer<OutputStream> NOT_CLOSE_STREAM = stream -> {
-    };
-    private static final Consumer<OutputStream> CLOSE_STREAM = ExportExcel::closeStream;
-
-
-
-
+public class ExportExcel {
     private Workbook workbook;
 
     private Sheet sheet;
@@ -65,44 +52,65 @@ public class ExportExcel implements Closeable {
     /**
      * 导出完数据的后处理
      */
-    private Runnable postProcessing = ()->{};
+    private Runnable postHandle = () -> {
+    };
 
     /**
-     * 关闭输出流
+     * 导出数据出现异常的处理
      */
-    private Consumer<OutputStream> closeOutputStreamFunction;
+    private Runnable exceptionHandle = () -> {
+    };
+
+    /**
+     * 在完成之后的处理
+     */
+    private Runnable afterCompletion = () -> {
+    };
 
     private ExportExcel(File file, Class clazz, List dataList, ExportExcelOptions options) {
         this.clazz = clazz;
         this.dataList = dataList;
         this.options = options;
-        this.closeOutputStreamFunction = CLOSE_STREAM;
         if (clazz != null) {
             initMap();
         }
-        File outFile = file;
+        // 创建文件所在的目录
         FileUtils.createParentFile(file);
         FileInputStream fileInputStream = null;
         try {
             Boolean is03Excel = file.getName().matches("^.+\\.(?i)(xls)$");
-            is03Excel = is03Excel == null ? options.isIs03Excel() : is03Excel;
-            if (file.exists() && options.isPreserveNodes()) {
+            if (file.exists()) {
+                // copy一份临时文件，防止在导出失败时，损坏原文件
                 File tmpFile = FileUtils.createTmpFile(is03Excel ? "xls" : "xlsx");
                 FileUtils.copyFile(file, tmpFile);
-                outFile = tmpFile;
-                postProcessing = () -> {
-                    FileUtils.copyFile(tmpFile, file);
+                // 是否加载之前的EXCEL数据
+                if (options.isPreserveNodes()) {
+                    fileInputStream = new FileInputStream(tmpFile);
+                    this.workbook = is03Excel ? new HSSFWorkbook(fileInputStream) : new XSSFWorkbook(fileInputStream);
+                } else {
+                    this.workbook = is03Excel ? new HSSFWorkbook() : new XSSFWorkbook();
+                }
+                // 把导出数据写入临时文件
+                this.outputStream = new FileOutputStream(tmpFile);
+                // 在导出成功后，copy临时文件到原文件
+                this.postHandle = () -> FileUtils.copyFile(tmpFile, file);
+                // 在导出结束后，清理占用资源
+                this.afterCompletion = () -> {
+                    closeStream(this.outputStream);
                     ExceptionUtils.engulf(() -> FileUtils.deleteFile(tmpFile));
                 };
-                fileInputStream = new FileInputStream(tmpFile);
-                this.workbook = is03Excel ? new HSSFWorkbook(fileInputStream) : new XSSFWorkbook(fileInputStream);
             } else {
                 this.workbook = is03Excel ? new HSSFWorkbook() : new XSSFWorkbook();
+                this.outputStream = new FileOutputStream(file);
+                // 在导出异常后，清理资源
+                this.exceptionHandle = () -> {
+                    closeStream(this.outputStream);
+                    FileUtils.deleteFile(file);
+                };
             }
-            this.outputStream = new FileOutputStream(outFile);
         } catch (Exception e) {
             closeStream(fileInputStream);
-            closeStream(outputStream);
+            closeStream(this.outputStream);
             closeStream(this.workbook);
             throw new ExcelExportException(e);
         }
@@ -113,7 +121,9 @@ public class ExportExcel implements Closeable {
             this.clazz = clazz;
             this.dataList = dataList;
             this.options = options;
-            this.closeOutputStreamFunction = NOT_CLOSE_STREAM;
+            if (clazz != null) {
+                initMap();
+            }
             this.workbook = options.isIs03Excel() ? new HSSFWorkbook() : new XSSFWorkbook();
             this.outputStream = outputStream;
         } catch (Exception e) {
@@ -131,15 +141,15 @@ public class ExportExcel implements Closeable {
         this.options = options;
         if (this.clazz == null || this.clazz != clazz) {
             this.clazz = clazz;
-            map.clear();
             initMap();
         }
     }
 
     private void initMap() {
+        map.clear();
         List<ExcelField> fieldList = ExcelHelper.getExcelFields(clazz, options.getConverterService());
         for (ExcelField field : fieldList) {
-            Excel excel = field.getAnnotation(Excel.class);
+            Excel excel = field.getExcel();
             map.put(field, excel);
         }
     }
@@ -201,9 +211,10 @@ public class ExportExcel implements Closeable {
             nextSheet(clazz, dataList);
             finish();
         } catch (Exception e) {
+            exceptionHandle();
             throw new ExcelExportException("excel export error!", e);
         } finally {
-            ExceptionUtils.engulf(Try.of(this::close));
+            afterCompletion();
         }
     }
 
@@ -224,27 +235,44 @@ public class ExportExcel implements Closeable {
     }
 
     private String getSheetName() {
+        String preSheetName = null;
         String sheetName = null;
         do {
             sheetName = options.getSheetName();
-            if (sheetName == null) {
-                return null;
+            // 防止无限循环
+            if (Objects.equals(sheetName, preSheetName)) {
+                return sheetName;
             }
+            preSheetName = sheetName;
         } while (workbook.getSheet(sheetName) != null);
         return sheetName;
     }
 
     public void finish() throws IOException {
         workbook.write(outputStream);
-        postProcessing.run();
+        postHandle.run();
     }
 
-    @Override
-    public void close() throws IOException {
+    public void exceptionHandle() {
+        ExceptionUtils.engulf(exceptionHandle);
+    }
+
+    public static void exceptionHandle(ExportExcel exportExcel) {
+        if (exportExcel != null) {
+            exportExcel.exceptionHandle();
+        }
+    }
+
+    public void afterCompletion() {
         closeStream(workbook);
-        closeOutputStreamFunction.accept(outputStream);
+        ExceptionUtils.engulf(afterCompletion);
     }
 
+    public static void afterCompletion(ExportExcel exportExcel) {
+        if (exportExcel != null) {
+            exportExcel.afterCompletion();
+        }
+    }
 
     private void createTitle() {
         createRow(options.getTitleRow(), (entry, row, colNum) -> {
@@ -261,7 +289,7 @@ public class ExportExcel implements Closeable {
             }
             createRow(options.getTitleRow() + i + 1, (entry, row, colNum) -> {
                 ExcelField field = entry.getKey();
-                String fieldValue = field.get(data, String.class);
+                String fieldValue = field.get(data);
                 createCell(row, colNum, fieldValue);
             });
         }

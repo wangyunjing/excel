@@ -4,18 +4,19 @@ import com.wyj.excel.annotation.Excel;
 import com.wyj.excel.convert.Converter;
 import com.wyj.excel.convert.ConverterService;
 import com.wyj.excel.convert.DateFormattingHandler;
-import com.wyj.excel.util.ReflexUtils;
+import com.wyj.excel.util.ReflectionUtils;
 
-import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 /**
  * Created by wyj on 17-12-21.
  */
 public class ExcelField {
+
+    private static final Object DEFAULT_OBJECT = new Object();
+
+    private static final Map<Class<? extends Converter>, Converter> SPECIFIC_CONVERTER = new HashMap<>();
 
     private Excel excel;
 
@@ -29,124 +30,94 @@ public class ExcelField {
         this.route = route;
     }
 
+    ConverterService getConverterService() {
+        return converterService;
+    }
+
+    Field[] getRoute() {
+        return route;
+    }
+
     public Excel getExcel() {
         return excel;
     }
 
-    public ConverterService getConverterService() {
-        return converterService;
-    }
-
-    public Field[] getRoute() {
-        return route;
-    }
-
-    private Field getLastField() {
-        if (route.length == 0) {
+    /**
+     * 导出时使用
+     * 通过get方法获取值
+     */
+    public String get(Object instance) {
+        if (instance == null) {
             return null;
         }
-        return route[route.length - 1];
-    }
-
-    public <T extends Annotation> T getAnnotation(Class<T> annotation) {
-        Field lastField = getLastField();
-        if (lastField == null) {
-            return null;
-        }
-        return lastField.getAnnotation(annotation);
-    }
-
-    // 通过get方法获取值
-    public Object get(Object object) {
-        Class sourceClazz = object.getClass();
-
+        // 获取具体的实例
         for (Field field : getRoute()) {
-            object = ReflexUtils.getFieldValue(sourceClazz, object, field.getName());
-            if (object == null) {
+            instance = ReflectionUtils.getFieldValue(instance.getClass(), instance, field.getName());
+            if (instance == null) {
                 return null;
             }
-            sourceClazz = field.getType();
         }
-        return object;
+        Class sourceClass = instance.getClass();
+        // 指定转换器
+        Object result = specificConverter(excel.exportConverter(), instance);
+        // 时间格式化
+        result = result == DEFAULT_OBJECT ? dateHandler(sourceClass, String.class, instance) : result;
+        // 全局默认转换器
+        result = result == DEFAULT_OBJECT && converterService.isSupport(sourceClass, String.class)
+                ? converterService.convert(sourceClass, String.class, instance)
+                : result;
+        // String.class所表示的类或接口与sourceClass所表示的类或接口是否相同，或是否是其超类或超接口。如果是则返回 true；否则返回 false
+        result = result == DEFAULT_OBJECT && String.class.isAssignableFrom(sourceClass) ? instance : result;
+        // 如果没有对应的类型转换器，则默认使用toString方法。
+        return result == DEFAULT_OBJECT ? instance.toString() : (String) result;
     }
 
     /**
+     * 导入时使用
      * 通过get方法获取值
-     *
-     * @param object
-     * @param targetClass 如果targetClass==String.class，并且没有对应的类型转换器，则默认使用toString方法
-     *                    主要原因：减少类的数量
-     * @param <T>
-     * @return
+     * 通过set方法设置值
      */
-    public <T> T get(Object object, Class<T> targetClass) {
-        object = get(object);
-        if (object == null || targetClass.isAssignableFrom(object.getClass())) {
-            return (T) object;
-        }
-        Class sourceClass = object.getClass();
-        Object result = dateHandler(sourceClass, targetClass, object);
-        if (result != null) {
-            return (T) result;
-        }
-        if (converterService.isSupport(object.getClass(), targetClass)) {
-            return converterService.convert(object.getClass(), targetClass, object);
-        }
-        if (targetClass == String.class) {
-            return (T) object.toString();
-        }
-        throw new RuntimeException("没有对应的转换器, sourceClass=" + object.getClass().getName() + ", targetClass=" + targetClass.getName());
-    }
-
-    public void set(Object instance, Object value) {
-        if (value == null) {
+    public void set(Object instance, String value) {
+        if (value == null || excel.emptyToNull() && "".equals(value) || route == null || route.length == 0) {
             return;
         }
-        if (excel.emptyToNull() && "".equals(value)) {
-            return;
-        }
-        if (route == null || route.length == 0) {
-            return;
-        }
+        // 获取具体的实例和字段
         for (int i = 0; i < route.length - 1; i++) {
             Field field = route[i];
-            Object fieldValue = ReflexUtils.getFieldValue(instance.getClass(), instance, field.getName());
-
+            Object fieldValue = ReflectionUtils.getFieldValue(instance.getClass(), instance, field.getName());
             if (fieldValue == null) {
                 try {
                     fieldValue = field.getType().newInstance();
                 } catch (Exception e) {
                     throw new RuntimeException("创建" + field.getType() + "实例失败");
                 }
-                ReflexUtils.setFieldValue(instance.getClass(), instance, field.getName(), fieldValue);
+                ReflectionUtils.setFieldValue(instance.getClass(), instance, field.getName(), fieldValue);
             }
-
             instance = fieldValue;
         }
-
         Field field = route[route.length - 1];
 
-        Class sourceClass = value.getClass();
         Class targetClass = field.getType();
-
-        if (targetClass.isAssignableFrom(sourceClass)) {
-            ReflexUtils.setFieldValue(instance.getClass(), instance, field.getName(), targetClass.cast(value));
+        // 指定转换器
+        Object result = specificConverter(excel.importConverter(), value);
+        // 时间格式化
+        result = result == DEFAULT_OBJECT ? dateHandler(String.class, targetClass, value) : result;
+        // 全局默认转换器
+        result = result == DEFAULT_OBJECT && converterService.isSupport(String.class, targetClass)
+                ? converterService.convert(String.class, targetClass, value)
+                : result;
+        // targetClass所表示的类或接口与String.class所表示的类或接口是否相同，或是否是其超类或超接口。如果是则返回 true；否则返回 false
+        result = result == DEFAULT_OBJECT && targetClass.isAssignableFrom(String.class) ? targetClass.cast(value) : result;
+        if (result != DEFAULT_OBJECT) {
+            ReflectionUtils.setFieldValue(instance.getClass(), instance, field.getName(), result);
             return;
         }
-        Object convert = dateHandler(sourceClass, targetClass, value);
-
-        if (convert == null) {
-            convert = converterService.convert(sourceClass, targetClass, value);
-        }
-        ReflexUtils.setFieldValue(instance.getClass(), instance, field.getName(), convert);
+        throw new RuntimeException("没有对应的转换器, sourceClass=String.class, targetClass=" + targetClass.getName());
     }
 
     // 时间格式化处理
     private Object dateHandler(Class sourceClass, Class targetClass, Object source) {
-        if (!sourceClass.isAssignableFrom(source.getClass())) {
-            return null;
-        }
-        Object result = null;
+        Object result = DEFAULT_OBJECT;
         Converter<?, ?> converter = converterService.getConverter(sourceClass, targetClass);
         if (converter != null && converter instanceof DateFormattingHandler && !"".equals(excel.dateFormat())) {
             DateFormattingHandler handler = (DateFormattingHandler) converter;
@@ -155,6 +126,28 @@ public class ExcelField {
             }
         }
         return result;
+    }
+
+    // 使用指定的转换器
+    private Object specificConverter(Class<? extends Converter> converterClass, Object value) {
+        if (converterClass != Converter.class) {
+            Converter converter = SPECIFIC_CONVERTER.get(converterClass);
+            if (converter == null) {
+                synchronized (SPECIFIC_CONVERTER) {
+                    try {
+                        converter = SPECIFIC_CONVERTER.get(converterClass);
+                        if (converter == null) {
+                            converter = converterClass.newInstance();
+                            SPECIFIC_CONVERTER.put(converterClass, converter);
+                        }
+                    } catch (Exception e) {
+                        throw new RuntimeException("创建" + converterClass.getSimpleName() + "实例失败");
+                    }
+                }
+            }
+            return converter.convert(value);
+        }
+        return DEFAULT_OBJECT;
     }
 
     public static class Builder {

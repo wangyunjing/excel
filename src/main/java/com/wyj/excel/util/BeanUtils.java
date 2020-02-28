@@ -30,14 +30,14 @@ public class BeanUtils {
 		Class<?> sourceClass = source.getClass();
 		Class<?> targetClass = target.getClass();
 
-		Method[] sourceGetMethods = ReflexUtils.getUniqueGetMethod(sourceClass);
-		Method[] targetSetMethods = ReflexUtils.getUniqueSetMethod(targetClass);
+		Method[] sourceGetMethods = ReflectionUtils.getUniqueGetMethod(sourceClass);
+		Method[] targetSetMethods = ReflectionUtils.getUniqueSetMethod(targetClass);
 
 		for (Method sourceGetMethod : sourceGetMethods) {
 
 			for (Method targetSetMethod : targetSetMethods) {
-				String sourceName = ReflexUtils.getFieldNameByMethodName(sourceGetMethod.getName(), 3);
-				String targetName = ReflexUtils.getFieldNameByMethodName(targetSetMethod.getName(), 3);
+				String sourceName = ReflectionUtils.getFieldNameByMethodName(sourceGetMethod.getName(), 3);
+				String targetName = ReflectionUtils.getFieldNameByMethodName(targetSetMethod.getName(), 3);
 
 				Class<?> sourceReturnType = sourceGetMethod.getReturnType();
 				Class<?> targetParameterType = targetSetMethod.getParameterTypes()[0];
@@ -48,13 +48,13 @@ public class BeanUtils {
 						break;
 					}
 
-					Object arg = ReflexUtils.invokeMethod(sourceGetMethod, source);
+					Object arg = ReflectionUtils.invokeMethod(sourceGetMethod, source);
 
 					// 排除null字段的copy
 					if (excludeNull == true && arg == null) {
 						break;
 					}
-					ReflexUtils.invokeMethod(targetSetMethod, target, arg);
+					ReflectionUtils.invokeMethod(targetSetMethod, target, arg);
 					break;
 				}
 			}
